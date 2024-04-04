@@ -1,0 +1,7 @@
+geemap
+solara
+geopandas
+pydantic< 2.0 
+numpy
+matplotlib
+pandas

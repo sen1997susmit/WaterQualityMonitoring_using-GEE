@@ -1,0 +1,1942 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.353">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Reproducing Chlorophyll-a Analysis in Santa Monica Bay Using Landsat 8</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="SMB-ee-stats_files/libs/clipboard/clipboard.min.js"></script>
+<script src="SMB-ee-stats_files/libs/quarto-html/quarto.js"></script>
+<script src="SMB-ee-stats_files/libs/quarto-html/popper.min.js"></script>
+<script src="SMB-ee-stats_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="SMB-ee-stats_files/libs/quarto-html/anchor.min.js"></script>
+<link href="SMB-ee-stats_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="SMB-ee-stats_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="SMB-ee-stats_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="SMB-ee-stats_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="SMB-ee-stats_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha512-c3Nl8+7g4LMSTdrm621y7kf9v3SDPnhxLNhcjFJbKECVnmZHTdo+IRO05sNLTH/D3vA6u1X32ehoLC7WFVdheg==" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script>
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Reproducing Chlorophyll-a Analysis in Santa Monica Bay Using Landsat 8</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+</header>
+
+<p>This notebook aims to reproduce and extend the analysis conducted in the ocean remote sensing project titled “Remote Sensing of Chlorophyll-a using Landsat 8”. The original project, available <a href="https://romero61.github.io/posts/SMB/">here</a>, focused on the analysis of Chlorophyll-a concentrations in the Santa Monica Bay. The study was based on the methodology proposed by Trinh et al.&nbsp;2017.</p>
+<p>We utilize Landsat 8 satellite imagery to estimate Chlorophyll-a concentrations, and analyze changes over time, particularly focusing on the impact of the Hyperion Treatment Plant failure.</p>
+<p>The notebook includes the following steps:</p>
+<ol type="1">
+<li><p>Importing necessary Python libraries for data manipulation, mathematical operations, data visualization, handling date and time data, interacting with Google Earth Engine, and handling geospatial data.</p></li>
+<li><p>Initializing the Earth Engine API and creating an interactive map using the geemap library.</p></li>
+<li><p>Defining the collection of satellite images to be used (Landsat 8 OLI images) and the study area.</p></li>
+<li><p>Processing the satellite images, including applying scale factors and estimating Chlorophyll-a concentrations.</p></li>
+<li><p>Visualizing the processed images on an interactive map.</p></li>
+</ol>
+<p>The next steps of this project will include retrieving the most recent image from the collection, calculating basic statistics for Chlorophyll-a concentrations, allowing user-defined regions for analysis, and integrating this script into an R Shiny dashboard for interactive data exploration.</p>
+<p>Trinh, R. C., Fichot, C. G., Gierach, M. M., Holt, B., Malakar, N. K., Hulley, G., &amp; Smith, J. (2017). Application of Landsat 8 for Monitoring Impacts of Wastewater Discharge on Coastal Water Quality. Frontiers in Marine Science, 4. https://doi.org/10.3389/fmars.2017.00329</p>
+<div class="cell" data-tags="[]" data-execution_count="1">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">#1) Import all necessary packages</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.dates <span class="im">as</span> mdates</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> datetime</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> ee</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> geemap.foliumap <span class="im">as</span> geemap</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> geopandas <span class="im">as</span> gpd</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> datetime <span class="im">import</span> datetime</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> ipywidgets <span class="im">as</span> widgets</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> seaborn <span class="im">as</span> sns</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-execution_count="2">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> constants <span class="im">import</span>   STUDY_BOUNDARY_PATH</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-execution_count="3">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>shapefile_path <span class="op">=</span> STUDY_BOUNDARY_PATH</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>study_boundary <span class="op">=</span> gpd.read_file(shapefile_path)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<section id="import-landsat8-oli" class="level1">
+<h1>Import Landsat8 OLI</h1>
+<p>https://developers.google.com/earth-engine/datasets/catalog/LANDSAT_LC08_C02_T1_L2#terms-of-use</p>
+<p>Landsat-8 image courtesy of the U.S. Geological Survey</p>
+<div class="cell" data-tags="[]" data-execution_count="4">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Initialize the Earth Engine library</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co">#ee.Authenticate()</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>ee.Initialize()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-execution_count="5">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define the collection</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>collection <span class="op">=</span> <span class="st">"LANDSAT/LC08/C02/T1_L2"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-execution_count="6">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load the study area</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>ee_boundary <span class="op">=</span> geemap.geopandas_to_ee(study_boundary)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-execution_count="7">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>aoi <span class="op">=</span> ee_boundary.geometry()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-execution_count="8">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define the Image Collection</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>image_collection <span class="op">=</span> ee.ImageCollection(collection) <span class="op">\</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    .filterBounds(aoi) <span class="op">\</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    .sort(<span class="st">'system:time_start'</span>, <span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-execution_count="9">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Get the four most recent images</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>recent_images <span class="op">=</span> image_collection.limit(<span class="dv">100</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-execution_count="10">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Get the dates of the images</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>dates <span class="op">=</span> recent_images.aggregate_array(<span class="st">'system:time_start'</span>).getInfo()</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert the timestamps to readable dates</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>dates <span class="op">=</span> [datetime.fromtimestamp(date<span class="op">/</span><span class="dv">1000</span>).strftime(<span class="st">'%Y-%m-</span><span class="sc">%d</span><span class="st">'</span>) <span class="cf">for</span> date <span class="kw">in</span> dates]</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Sort the list of unique dates in descending order</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>dates <span class="op">=</span> <span class="bu">sorted</span>(<span class="bu">list</span>(<span class="bu">set</span>(dates)), reverse<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Print the unique dates</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Print the unique dates</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Dates of the four most recent images:"</span>, dates)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Dates of the four most recent images: ['2023-06-10', '2023-05-25', '2023-05-09', '2023-04-07', '2023-03-22', '2023-03-06', '2023-02-18', '2023-02-02', '2023-01-17', '2023-01-01', '2022-12-16', '2022-11-30', '2022-11-14', '2022-10-29', '2022-10-13', '2022-09-27', '2022-08-26', '2022-08-10', '2022-07-25', '2022-07-09', '2022-06-23', '2022-06-07', '2022-05-22', '2022-05-06', '2022-04-20', '2022-04-04', '2022-03-19', '2022-03-03', '2022-02-15', '2022-01-30', '2022-01-14', '2021-12-29', '2021-12-13', '2021-11-27', '2021-11-11', '2021-10-26', '2021-10-10', '2021-09-24', '2021-09-08', '2021-08-23', '2021-08-07', '2021-07-22', '2021-07-06', '2021-06-20', '2021-06-04', '2021-05-19', '2021-05-03', '2021-04-17', '2021-04-01', '2021-03-16', '2021-02-28', '2021-02-12']</code></pre>
+</div>
+</div>
+<div class="cell" data-execution_count="11">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define a function to calculate statistics</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> calculate_stats(image, region):</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    stats <span class="op">=</span> image.reduceRegion(</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>        reducer<span class="op">=</span>ee.Reducer.mean().combine(</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>            reducer2<span class="op">=</span>ee.Reducer.stdDev(),</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>            sharedInputs<span class="op">=</span><span class="va">True</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>        ),</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>        geometry<span class="op">=</span>region,</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>        scale<span class="op">=</span><span class="dv">30</span>,  <span class="co"># scale in meters</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>        maxPixels<span class="op">=</span><span class="fl">1e9</span></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> stats.getInfo()</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-execution_count="12">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define a function to apply scaling and offset</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> apply_scale_factors(image):</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    optical_bands <span class="op">=</span> image.select(<span class="st">'SR_B.*'</span>).multiply(<span class="fl">0.0000275</span>).add(<span class="op">-</span><span class="fl">0.2</span>)</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    thermal_bands <span class="op">=</span> image.select(<span class="st">'ST_B.*'</span>).multiply(<span class="fl">0.00341802</span>).add(<span class="fl">149.0</span>)</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    image <span class="op">=</span> image.addBands(optical_bands, <span class="va">None</span>, <span class="va">True</span>)</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    image <span class="op">=</span> image.addBands(thermal_bands, <span class="va">None</span>, <span class="va">True</span>)</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> image</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>https://calekochenour.github.io/remote-sensing-textbook/03-beginner/chapter13-data-quality-bitmasks.html</p>
+<div class="cell" data-execution_count="13">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define function to return QA bands</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> extract_qa_bits(qa_band, start_bit, end_bit, band_name):</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="co">    Extracts QA values from an image</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a><span class="co">    :param qa_band: Single-band image of the QA layer</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="co">    :type qa_band: ee.Image</span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a><span class="co">    :param start_bit: Starting bit</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a><span class="co">    :type start_bit: Integer</span></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a><span class="co">    :param end_bit: Ending bit</span></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a><span class="co">    :type end_bit: Integer</span></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a><span class="co">    :param band_name: New name for the band</span></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a><span class="co">    :type band_name: String</span></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a><span class="co">    :return: Image with extracted QA values</span></span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a><span class="co">    :rtype: ee.Image</span></span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a><span class="co">    """</span></span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Initialize QA bit string/pattern to check QA band against</span></span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>    qa_bits <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Add each specified QA bit flag value/string/pattern to the QA bits to check/extract</span></span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> bit <span class="kw">in</span> <span class="bu">range</span>(start_bit, end_bit <span class="op">+</span> <span class="dv">1</span>):</span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>        qa_bits <span class="op">+=</span> <span class="bu">pow</span>(<span class="dv">2</span>, bit)  <span class="co"># Same as qa_bits += (1 &lt;&lt; bit)</span></span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Return a single band image of the extracted QA bit values</span></span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> qa_band.select([<span class="dv">0</span>], [band_name]).bitwiseAnd(qa_bits).rightShift(start_bit)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-execution_count="14">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define a function to calculate Chlorphyll-a based on trinh et al.(2017)</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> trinh_et_al_chl_a(image):</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    <span class="co"># extract the cloud and water masks</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>    qa_band <span class="op">=</span> ee.Image(image).select(<span class="st">'QA_PIXEL'</span>)</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    cloudMask <span class="op">=</span> extract_qa_bits(qa_band, <span class="dv">8</span>, <span class="dv">9</span>, <span class="st">"cloud"</span>).neq(<span class="dv">3</span>)  <span class="co"># different than 3 to remove clouds</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    waterMask <span class="op">=</span> extract_qa_bits(qa_band, <span class="dv">7</span>, <span class="dv">7</span>, <span class="st">"water"</span>).eq(<span class="dv">1</span>)  <span class="co"># equals 1 to keep water</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>    <span class="co"># apply the masks to the image</span></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>    image <span class="op">=</span> image.updateMask(cloudMask).updateMask(waterMask)</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>    image <span class="op">=</span>  apply_scale_factors(image)</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>    a_0 <span class="op">=</span> <span class="fl">0.9375</span></span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>    a_1 <span class="op">=</span> <span class="op">-</span><span class="fl">1.8862</span></span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>    blue_bands <span class="op">=</span> image.select(<span class="st">'SR_B2'</span>)</span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>    green_bands <span class="op">=</span> image.select(<span class="st">'SR_B3'</span>)</span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>    ln_chl_a <span class="op">=</span> image.expression(<span class="st">"a_0 + a_1 * log(blue_bands/green_bands)"</span>, {</span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>        <span class="st">'a_0'</span>: a_0,</span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>        <span class="st">'a_1'</span>: a_1,</span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>        <span class="st">'blue_bands'</span>: blue_bands,</span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>        <span class="st">'green_bands'</span>: green_bands</span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>    })</span>
+<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a>    image <span class="op">=</span> image.addBands(ln_chl_a.select([<span class="dv">0</span>], [<span class="st">'ln_chl_a'</span>]))</span>
+<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-25"><a href="#cb15-25" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> image</span>
+<span id="cb15-26"><a href="#cb15-26" aria-hidden="true" tabindex="-1"></a></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-execution_count="15">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co">'''# Define the function to extract the data (mean value) and area.</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="co">def extract_data(image):</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="co">    stats = image.reduceRegion(ee.Reducer.mean(), aoi, 30)</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="co">    area = image.geometry().area()</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="co">    return image.set('date', image.date().format()).set(stats).set('Area', area)'''</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co">'''# Define the function to extract the data (mean value) and area.</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="co">def extract_data(image):</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="co">    stats = image.reduceRegion(ee.Reducer.mean(), aoi, 30)</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="co">    area = image.select(0).gt(0).reduceRegion(ee.Reducer.sum(), aoi, 30).get('ln_chl_a')</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="co">    return image.set('date', image.date().format()).set(stats).set('Area', area)'''</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-execution_count="20">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define the function to extract the data (mean value) and valid pixel area.</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> extract_data(image):</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    stats <span class="op">=</span> image.reduceRegion(ee.Reducer.mean(), aoi, <span class="dv">30</span>)</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>    valid_pixels <span class="op">=</span> image.select(<span class="st">'ln_chl_a'</span>).unmask().neq(<span class="dv">0</span>)  <span class="co"># create a mask of valid pixels</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>    valid_area <span class="op">=</span> valid_pixels.multiply(ee.Image.pixelArea()).reduceRegion(ee.Reducer.<span class="bu">sum</span>(), aoi, <span class="dv">30</span>)  <span class="co"># calculate the area of valid pixels</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> image.<span class="bu">set</span>(<span class="st">'date'</span>, image.date().<span class="bu">format</span>()).<span class="bu">set</span>(stats).<span class="bu">set</span>(<span class="st">'Area'</span>, valid_area)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-execution_count="16">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>turbo_palette <span class="op">=</span> [</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"30123b"</span>, <span class="st">"321543"</span>, <span class="st">"33184a"</span>, <span class="st">"341b51"</span>, <span class="st">"351e58"</span>, <span class="st">"36215f"</span>, <span class="st">"372466"</span>, <span class="st">"38276d"</span>, </span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"392a73"</span>, <span class="st">"3a2d79"</span>, <span class="st">"3b2f80"</span>, <span class="st">"3c3286"</span>, <span class="st">"3d358b"</span>, <span class="st">"3e3891"</span>, <span class="st">"3f3b97"</span>, <span class="st">"3f3e9c"</span>, </span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"4040a2"</span>, <span class="st">"4143a7"</span>, <span class="st">"4146ac"</span>, <span class="st">"4249b1"</span>, <span class="st">"424bb5"</span>, <span class="st">"434eba"</span>, <span class="st">"4451bf"</span>, <span class="st">"4454c3"</span>, </span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"4456c7"</span>, <span class="st">"4559cb"</span>, <span class="st">"455ccf"</span>, <span class="st">"455ed3"</span>, <span class="st">"4661d6"</span>, <span class="st">"4664da"</span>, <span class="st">"4666dd"</span>, <span class="st">"4669e0"</span>, </span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"466be3"</span>, <span class="st">"476ee6"</span>, <span class="st">"4771e9"</span>, <span class="st">"4773eb"</span>, <span class="st">"4776ee"</span>, <span class="st">"4778f0"</span>, <span class="st">"477bf2"</span>, <span class="st">"467df4"</span>, </span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"4680f6"</span>, <span class="st">"4682f8"</span>, <span class="st">"4685fa"</span>, <span class="st">"4687fb"</span>, <span class="st">"458afc"</span>, <span class="st">"458cfd"</span>, <span class="st">"448ffe"</span>, <span class="st">"4391fe"</span>, </span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"4294ff"</span>, <span class="st">"4196ff"</span>, <span class="st">"4099ff"</span>, <span class="st">"3e9bfe"</span>, <span class="st">"3d9efe"</span>, <span class="st">"3ba0fd"</span>, <span class="st">"3aa3fc"</span>, <span class="st">"38a5fb"</span>, </span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"37a8fa"</span>, <span class="st">"35abf8"</span>, <span class="st">"33adf7"</span>, <span class="st">"31aff5"</span>, <span class="st">"2fb2f4"</span>, <span class="st">"2eb4f2"</span>, <span class="st">"2cb7f0"</span>, <span class="st">"2ab9ee"</span>, </span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"28bceb"</span>, <span class="st">"27bee9"</span>, <span class="st">"25c0e7"</span>, <span class="st">"23c3e4"</span>, <span class="st">"22c5e2"</span>, <span class="st">"20c7df"</span>, <span class="st">"1fc9dd"</span>, <span class="st">"1ecbda"</span>, </span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"1ccdd8"</span>, <span class="st">"1bd0d5"</span>, <span class="st">"1ad2d2"</span>, <span class="st">"1ad4d0"</span>, <span class="st">"19d5cd"</span>, <span class="st">"18d7ca"</span>, <span class="st">"18d9c8"</span>, <span class="st">"18dbc5"</span>, </span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"18ddc2"</span>, <span class="st">"18dec0"</span>, <span class="st">"18e0bd"</span>, <span class="st">"19e2bb"</span>, <span class="st">"19e3b9"</span>, <span class="st">"1ae4b6"</span>, <span class="st">"1ce6b4"</span>, <span class="st">"1de7b2"</span>, </span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">"1fe9af"</span>, <span class="st">"20eaac"</span>, <span class="st">"22ebaa"</span>, <span class="st">"25eca7"</span>, <span class="st">"27eea4"</span>, <span class="st">"2aefa1"</span>, <span class="st">"2cf09e"</span>, <span class="st">"2ff19b"</span>, </span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">"32f298"</span>, <span class="st">"35f394"</span>, <span class="st">"38f491"</span>, <span class="st">"3cf58e"</span>, <span class="st">"3ff68a"</span>, <span class="st">"43f787"</span>, <span class="st">"46f884"</span>, <span class="st">"4af880"</span>, </span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>    <span class="st">"4ef97d"</span>, <span class="st">"52fa7a"</span>, <span class="st">"55fa76"</span>, <span class="st">"59fb73"</span>, <span class="st">"5dfc6f"</span>, <span class="st">"61fc6c"</span>, <span class="st">"65fd69"</span>, <span class="st">"69fd66"</span>, </span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a>    <span class="st">"6dfe62"</span>, <span class="st">"71fe5f"</span>, <span class="st">"75fe5c"</span>, <span class="st">"79fe59"</span>, <span class="st">"7dff56"</span>, <span class="st">"80ff53"</span>, <span class="st">"84ff51"</span>, <span class="st">"88ff4e"</span>, </span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a>    <span class="st">"8bff4b"</span>, <span class="st">"8fff49"</span>, <span class="st">"92ff47"</span>, <span class="st">"96fe44"</span>, <span class="st">"99fe42"</span>, <span class="st">"9cfe40"</span>, <span class="st">"9ffd3f"</span>, <span class="st">"a1fd3d"</span>, <span class="st">"a4fc3c"</span>, <span class="st">"a7fc3a"</span>, <span class="st">"a9fb39"</span>, <span class="st">"acfb38"</span>, </span>
+<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a>    <span class="st">"affa37"</span>, <span class="st">"b1f936"</span>, <span class="st">"b4f836"</span>, <span class="st">"b7f735"</span>, <span class="st">"b9f635"</span>, <span class="st">"bcf534"</span>, <span class="st">"bef434"</span>, <span class="st">"c1f334"</span>, </span>
+<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a>    <span class="st">"c3f134"</span>, <span class="st">"c6f034"</span>, <span class="st">"c8ef34"</span>, <span class="st">"cbed34"</span>, <span class="st">"cdec34"</span>, <span class="st">"d0ea34"</span>, <span class="st">"d2e935"</span>, <span class="st">"d4e735"</span>, </span>
+<span id="cb19-20"><a href="#cb19-20" aria-hidden="true" tabindex="-1"></a>    <span class="st">"d7e535"</span>, <span class="st">"d9e436"</span>, <span class="st">"dbe236"</span>, <span class="st">"dde037"</span>, <span class="st">"dfdf37"</span>, <span class="st">"e1dd37"</span>, <span class="st">"e3db38"</span>, <span class="st">"e5d938"</span>, </span>
+<span id="cb19-21"><a href="#cb19-21" aria-hidden="true" tabindex="-1"></a>    <span class="st">"e7d739"</span>, <span class="st">"e9d539"</span>, <span class="st">"ebd339"</span>, <span class="st">"ecd13a"</span>, <span class="st">"eecf3a"</span>, <span class="st">"efcd3a"</span>, <span class="st">"f1cb3a"</span>, <span class="st">"f2c93a"</span>, </span>
+<span id="cb19-22"><a href="#cb19-22" aria-hidden="true" tabindex="-1"></a>    <span class="st">"f4c73a"</span>, <span class="st">"f5c53a"</span>, <span class="st">"f6c33a"</span>, <span class="st">"f7c13a"</span>, <span class="st">"f8be39"</span>, <span class="st">"f9bc39"</span>, <span class="st">"faba39"</span>, <span class="st">"fbb838"</span>, </span>
+<span id="cb19-23"><a href="#cb19-23" aria-hidden="true" tabindex="-1"></a>    <span class="st">"fbb637"</span>, <span class="st">"fcb336"</span>, <span class="st">"fcb136"</span>, <span class="st">"fdae35"</span>, <span class="st">"fdac34"</span>, <span class="st">"fea933"</span>, <span class="st">"fea732"</span>, <span class="st">"fea431"</span>, </span>
+<span id="cb19-24"><a href="#cb19-24" aria-hidden="true" tabindex="-1"></a>    <span class="st">"fea130"</span>, <span class="st">"fe9e2f"</span>, <span class="st">"fe9b2d"</span>, <span class="st">"fe992c"</span>, <span class="st">"fe962b"</span>, <span class="st">"fe932a"</span>, <span class="st">"fe9029"</span>, <span class="st">"fd8d27"</span>, </span>
+<span id="cb19-25"><a href="#cb19-25" aria-hidden="true" tabindex="-1"></a>    <span class="st">"fd8a26"</span>, <span class="st">"fc8725"</span>, <span class="st">"fc8423"</span>, <span class="st">"fb8122"</span>, <span class="st">"fb7e21"</span>, <span class="st">"fa7b1f"</span>, <span class="st">"f9781e"</span>, <span class="st">"f9751d"</span>, </span>
+<span id="cb19-26"><a href="#cb19-26" aria-hidden="true" tabindex="-1"></a>    <span class="st">"f8721c"</span>, <span class="st">"f76f1a"</span>, <span class="st">"f66c19"</span>, <span class="st">"f56918"</span>, <span class="st">"f46617"</span>, <span class="st">"f36315"</span>, <span class="st">"f26014"</span>, <span class="st">"f15d13"</span>, </span>
+<span id="cb19-27"><a href="#cb19-27" aria-hidden="true" tabindex="-1"></a>    <span class="st">"f05b12"</span>, <span class="st">"ef5811"</span>, <span class="st">"ed5510"</span>, <span class="st">"ec530f"</span>, <span class="st">"eb500e"</span>, <span class="st">"ea4e0d"</span>, <span class="st">"e84b0c"</span>, <span class="st">"e7490c"</span>, </span>
+<span id="cb19-28"><a href="#cb19-28" aria-hidden="true" tabindex="-1"></a>    <span class="st">"e5470b"</span>, <span class="st">"e4450a"</span>, <span class="st">"e2430a"</span>, <span class="st">"e14109"</span>, <span class="st">"df3f08"</span>, <span class="st">"dd3d08"</span>, <span class="st">"dc3b07"</span>, <span class="st">"da3907"</span>, </span>
+<span id="cb19-29"><a href="#cb19-29" aria-hidden="true" tabindex="-1"></a>    <span class="st">"d83706"</span>, <span class="st">"d63506"</span>, <span class="st">"d43305"</span>, <span class="st">"d23105"</span>, <span class="st">"d02f05"</span>, <span class="st">"ce2d04"</span>, <span class="st">"cc2b04"</span>, <span class="st">"ca2a04"</span>, </span>
+<span id="cb19-30"><a href="#cb19-30" aria-hidden="true" tabindex="-1"></a>    <span class="st">"c82803"</span>, <span class="st">"c52603"</span>, <span class="st">"c32503"</span>, <span class="st">"c12302"</span>, <span class="st">"be2102"</span>, <span class="st">"bc2002"</span>, <span class="st">"b91e02"</span>, <span class="st">"b71d02"</span>, </span>
+<span id="cb19-31"><a href="#cb19-31" aria-hidden="true" tabindex="-1"></a>    <span class="st">"b41b01"</span>, <span class="st">"b21a01"</span>, <span class="st">"af1801"</span>, <span class="st">"ac1701"</span>, <span class="st">"a91601"</span>, <span class="st">"a71401"</span>, <span class="st">"a41301"</span>, <span class="st">"a11201"</span>, </span>
+<span id="cb19-32"><a href="#cb19-32" aria-hidden="true" tabindex="-1"></a>    <span class="st">"9e1001"</span>, <span class="st">"9b0f01"</span>, <span class="st">"980e01"</span>, <span class="st">"950d01"</span>, <span class="st">"920b01"</span>, <span class="st">"8e0a01"</span>, <span class="st">"8b0902"</span>, <span class="st">"880802"</span>, </span>
+<span id="cb19-33"><a href="#cb19-33" aria-hidden="true" tabindex="-1"></a>    <span class="st">"850702"</span>, <span class="st">"810602"</span>, <span class="st">"7e0502"</span>, <span class="st">"7a0403"</span></span>
+<span id="cb19-34"><a href="#cb19-34" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb19-35"><a href="#cb19-35" aria-hidden="true" tabindex="-1"></a></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-execution_count="17">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>chloro_params<span class="op">=</span> {</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">'bands'</span>: [<span class="st">'ln_chl_a'</span>],</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">'min'</span>: <span class="dv">0</span>,</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">'max'</span>: <span class="dv">3</span>,</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">'palette'</span>: turbo_palette</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-execution_count="18">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>chloro_map <span class="op">=</span> geemap.Map()</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>chloro_map.add_basemap(basemap<span class="op">=</span><span class="st">'TERRAIN'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Initialize an empty image collection to store the processed images.</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>processed_collection <span class="op">=</span> ee.ImageCollection([])</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Loop through the dates and get the imagery.</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> date <span class="kw">in</span> dates:</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>    start_date <span class="op">=</span> ee.Date(date)</span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>    end_date <span class="op">=</span> start_date.advance(<span class="dv">1</span>, <span class="st">'day'</span>)</span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>   <span class="co"># Filter the image collection by date and area</span></span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>    image <span class="op">=</span> ee.ImageCollection(collection) <span class="op">\</span></span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>        .filterDate(start_date, end_date) <span class="op">\</span></span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>        .filterBounds(aoi) <span class="op">\</span></span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>        .first()  <span class="co"># get the first image that matches the filters</span></span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> image: </span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Clip the image to the study boundary</span></span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>        clipped_image <span class="op">=</span> image.clip(aoi)</span>
+<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a>         <span class="co"># check if image exists</span></span>
+<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a>        processed_image <span class="op">=</span> trinh_et_al_chl_a(clipped_image)  <span class="co"># process the image</span></span>
+<span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a>        chloro_map.addLayer(processed_image, chloro_params, date, shown <span class="op">=</span> <span class="va">False</span>)  <span class="co"># add the image to the map</span></span>
+<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a>        processed_collection <span class="op">=</span> processed_collection.merge(processed_image)  <span class="co"># add the image to the processed collection</span></span>
+<span id="cb22-22"><a href="#cb22-22" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
+<span id="cb22-23"><a href="#cb22-23" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f"No image found for date </span><span class="sc">{</span>date<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb22-24"><a href="#cb22-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-25"><a href="#cb22-25" aria-hidden="true" tabindex="-1"></a><span class="co"># Map the extract_data function over the processed collection.</span></span>
+<span id="cb22-26"><a href="#cb22-26" aria-hidden="true" tabindex="-1"></a>extract__collection <span class="op">=</span> processed_collection.<span class="bu">map</span>(extract_data)</span>
+<span id="cb22-27"><a href="#cb22-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-28"><a href="#cb22-28" aria-hidden="true" tabindex="-1"></a><span class="co"># Reduce the processed collection to a list of dates, chlorophyll-a values, and area.</span></span>
+<span id="cb22-29"><a href="#cb22-29" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> extract__collection.reduceColumns(ee.Reducer.toList(<span class="dv">3</span>), [<span class="st">'date'</span>, <span class="st">'ln_chl_a'</span>, <span class="st">'Area'</span>]).get(<span class="st">'list'</span>).getInfo()</span>
+<span id="cb22-30"><a href="#cb22-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-31"><a href="#cb22-31" aria-hidden="true" tabindex="-1"></a></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-execution_count="28">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert the data to a pandas dataframe and format the date.</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.DataFrame(data, columns<span class="op">=</span>[<span class="st">'date'</span>, <span class="st">'ln_chl_a'</span>, <span class="st">'Area'</span>])</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'date'</span>] <span class="op">=</span> pd.to_datetime(df[<span class="st">'date'</span>])</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'Area'</span>] <span class="op">=</span> df[<span class="st">'Area'</span>].<span class="bu">apply</span>(<span class="kw">lambda</span> x: x[<span class="st">'ln_chl_a'</span>])</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Add ln_chl_a_norm to the dataframe</span></span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'ln_chl_a_norm'</span>] <span class="op">=</span> df[<span class="st">'ln_chl_a'</span>] <span class="op">/</span> df[<span class="st">'Area'</span>]</span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-execution_count="35">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df[df[<span class="st">'date'</span>] <span class="op">!=</span> <span class="st">'2022-05-22 18:28:16'</span>]  <span class="co"># Keep only the rows where 'date' is not '2022-05-22'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-execution_count="37">
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>df</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="37">
+<div>
+
+
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">date</th>
+<th data-quarto-table-cell-role="th">ln_chl_a</th>
+<th data-quarto-table-cell-role="th">Area</th>
+<th data-quarto-table-cell-role="th">ln_chl_a_norm</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">0</td>
+<td>2023-04-07 18:27:58</td>
+<td>1.453448</td>
+<td>2.639719e+08</td>
+<td>5.506069e-09</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">1</td>
+<td>2023-03-22 18:28:11</td>
+<td>2.447736</td>
+<td>3.026305e+07</td>
+<td>8.088199e-08</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">2</td>
+<td>2023-03-06 18:28:20</td>
+<td>0.342355</td>
+<td>2.641691e+08</td>
+<td>1.295970e-09</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">3</td>
+<td>2023-02-18 18:28:32</td>
+<td>1.153689</td>
+<td>1.701980e+07</td>
+<td>6.778515e-08</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">4</td>
+<td>2023-02-02 18:28:42</td>
+<td>3.125432</td>
+<td>1.534885e+07</td>
+<td>2.036265e-07</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">5</td>
+<td>2023-01-17 18:28:36</td>
+<td>1.095382</td>
+<td>2.599089e+08</td>
+<td>4.214487e-09</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">6</td>
+<td>2023-01-01 18:28:45</td>
+<td>0.950871</td>
+<td>2.543025e+08</td>
+<td>3.739134e-09</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">7</td>
+<td>2022-12-16 18:28:48</td>
+<td>2.372373</td>
+<td>3.235676e+06</td>
+<td>7.331924e-07</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">8</td>
+<td>2022-11-30 18:28:53</td>
+<td>0.589322</td>
+<td>6.291407e+07</td>
+<td>9.367095e-09</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">9</td>
+<td>2022-11-14 18:28:53</td>
+<td>0.146094</td>
+<td>2.642727e+08</td>
+<td>5.528145e-10</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">10</td>
+<td>2022-10-29 18:28:58</td>
+<td>0.247551</td>
+<td>2.638632e+08</td>
+<td>9.381799e-10</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">11</td>
+<td>2022-09-27 18:28:58</td>
+<td>0.374023</td>
+<td>1.949302e+08</td>
+<td>1.918756e-09</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">12</td>
+<td>2022-08-26 18:28:52</td>
+<td>0.120714</td>
+<td>1.411300e+08</td>
+<td>8.553370e-10</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">13</td>
+<td>2022-08-10 18:28:50</td>
+<td>0.723434</td>
+<td>2.628006e+08</td>
+<td>2.752788e-09</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">14</td>
+<td>2022-07-25 18:28:41</td>
+<td>2.862883</td>
+<td>1.020558e+08</td>
+<td>2.805212e-08</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">15</td>
+<td>2022-06-23 18:28:33</td>
+<td>2.452790</td>
+<td>1.300485e+08</td>
+<td>1.886058e-08</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">16</td>
+<td>2022-06-07 18:28:25</td>
+<td>1.180562</td>
+<td>7.082416e+05</td>
+<td>1.666891e-06</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">18</td>
+<td>2022-05-06 18:28:11</td>
+<td>2.823441</td>
+<td>2.349139e+08</td>
+<td>1.201905e-08</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">19</td>
+<td>2022-04-20 18:28:09</td>
+<td>3.558992</td>
+<td>2.133492e+08</td>
+<td>1.668153e-08</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">20</td>
+<td>2022-04-04 18:28:05</td>
+<td>1.142595</td>
+<td>2.537359e+08</td>
+<td>4.503088e-09</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">21</td>
+<td>2022-03-19 18:28:13</td>
+<td>1.682042</td>
+<td>2.402296e+08</td>
+<td>7.001810e-09</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">22</td>
+<td>2022-03-03 18:28:20</td>
+<td>1.982613</td>
+<td>1.524394e+06</td>
+<td>1.300591e-06</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">23</td>
+<td>2022-02-15 18:28:24</td>
+<td>0.310498</td>
+<td>5.157150e+07</td>
+<td>6.020724e-09</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">24</td>
+<td>2022-01-30 18:28:28</td>
+<td>0.058300</td>
+<td>2.639415e+08</td>
+<td>2.208841e-10</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">25</td>
+<td>2022-01-14 18:28:33</td>
+<td>2.186895</td>
+<td>1.183822e+08</td>
+<td>1.847317e-08</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">26</td>
+<td>2021-11-27 18:28:41</td>
+<td>0.058633</td>
+<td>2.638764e+08</td>
+<td>2.221989e-10</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">27</td>
+<td>2021-11-11 18:28:42</td>
+<td>0.237002</td>
+<td>2.636115e+08</td>
+<td>8.990565e-10</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">28</td>
+<td>2021-10-26 18:28:46</td>
+<td>0.433885</td>
+<td>2.622624e+08</td>
+<td>1.654394e-09</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">29</td>
+<td>2021-10-10 18:28:44</td>
+<td>0.415646</td>
+<td>2.638438e+08</td>
+<td>1.575350e-09</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">30</td>
+<td>2021-09-24 18:28:38</td>
+<td>1.145669</td>
+<td>1.579824e+08</td>
+<td>7.251879e-09</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">31</td>
+<td>2021-09-08 18:28:35</td>
+<td>2.610397</td>
+<td>2.331807e+05</td>
+<td>1.119474e-05</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">32</td>
+<td>2021-08-07 18:28:26</td>
+<td>1.485392</td>
+<td>2.610024e+08</td>
+<td>5.691103e-09</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">33</td>
+<td>2021-07-22 18:28:18</td>
+<td>2.179852</td>
+<td>6.463122e+07</td>
+<td>3.372754e-08</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">34</td>
+<td>2021-07-06 18:28:14</td>
+<td>3.023965</td>
+<td>2.393349e+08</td>
+<td>1.263487e-08</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">35</td>
+<td>2021-06-04 18:28:06</td>
+<td>1.878901</td>
+<td>1.707438e+05</td>
+<td>1.100421e-05</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">36</td>
+<td>2021-05-19 18:27:58</td>
+<td>2.826604</td>
+<td>2.090706e+08</td>
+<td>1.351985e-08</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">37</td>
+<td>2021-05-03 18:27:50</td>
+<td>2.294574</td>
+<td>2.460821e+08</td>
+<td>9.324424e-09</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">38</td>
+<td>2021-04-17 18:28:00</td>
+<td>2.224328</td>
+<td>2.581645e+08</td>
+<td>8.615933e-09</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">39</td>
+<td>2021-04-01 18:28:06</td>
+<td>2.756199</td>
+<td>4.952990e+07</td>
+<td>5.564717e-08</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">40</td>
+<td>2021-03-16 18:28:10</td>
+<td>0.590253</td>
+<td>2.627172e+08</td>
+<td>2.246725e-09</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">41</td>
+<td>2021-02-28 18:28:19</td>
+<td>2.897696</td>
+<td>2.180340e+08</td>
+<td>1.329011e-08</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">42</td>
+<td>2021-02-12 18:28:25</td>
+<td>0.437792</td>
+<td>2.629482e+08</td>
+<td>1.664938e-09</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<div class="cell" data-execution_count="38">
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Set the style of the plot</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>sns.set_style(<span class="st">"whitegrid"</span>)</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Create the plot</span></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">6</span>))</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>plt.plot(df[<span class="st">'date'</span>], df[<span class="st">'ln_chl_a'</span>], marker<span class="op">=</span><span class="st">'o'</span>, linestyle<span class="op">=</span><span class="st">'-'</span>)</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Format the x-axis to display the dates in a more readable format</span></span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>plt.gca().xaxis.set_major_formatter(mdates.DateFormatter(<span class="st">'%Y-%m-</span><span class="sc">%d</span><span class="st">'</span>))</span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a>plt.gca().xaxis.set_major_locator(mdates.DayLocator(interval<span class="op">=</span><span class="dv">120</span>))  <span class="co"># adjust the interval as needed</span></span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a>plt.gcf().autofmt_xdate()  <span class="co"># rotate the x labels</span></span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Add a title and labels to the axes</span></span>
+<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">'Time Series of Avg Chl-a Values'</span>, fontsize<span class="op">=</span><span class="dv">16</span>)</span>
+<span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">'Date'</span>, fontsize<span class="op">=</span><span class="dv">14</span>)</span>
+<span id="cb26-16"><a href="#cb26-16" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">'ln(chl-a)'</span>, fontsize<span class="op">=</span><span class="dv">14</span>)</span>
+<span id="cb26-17"><a href="#cb26-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Show the plot</span></span>
+<span id="cb26-18"><a href="#cb26-18" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<p><img src="SMB-ee-stats_files/figure-html/cell-26-output-1.png" class="img-fluid"></p>
+</div>
+</div>
+<div class="cell" data-execution_count="39">
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Create the plot for normalized Chlorophyll-a values</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">6</span>))</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>plt.plot(df[<span class="st">'date'</span>], df[<span class="st">'ln_chl_a_norm'</span>], marker<span class="op">=</span><span class="st">'o'</span>, linestyle<span class="op">=</span><span class="st">'-'</span>)</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a><span class="co">#Format the x-axis as datetime</span></span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>plt.gca().xaxis.set_major_formatter(mdates.DateFormatter(<span class="st">'%Y-%m-</span><span class="sc">%d</span><span class="st">'</span>))</span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>plt.gca().xaxis.set_major_locator(mdates.DayLocator(interval<span class="op">=</span><span class="dv">120</span>)) <span class="co"># set interval to 10 days</span></span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a><span class="co">#Set the labels and title</span></span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">'Date'</span>)</span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">'Normalized ln(Chlorophyll-a)'</span>)</span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">'Time series of Avg Normalized ln(Chl-a)'</span>)</span>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a><span class="co">#Rotate date labels automatically</span></span>
+<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a>plt.gcf().autofmt_xdate()</span>
+<span id="cb27-16"><a href="#cb27-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-17"><a href="#cb27-17" aria-hidden="true" tabindex="-1"></a><span class="co">#Show the plot</span></span>
+<span id="cb27-18"><a href="#cb27-18" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<p><img src="SMB-ee-stats_files/figure-html/cell-27-output-1.png" class="img-fluid"></p>
+</div>
+</div>
+</section>
+<section id="due-to-cloud-cover-no-images-for-6-10-5-25-5-09-in-2023" class="level1">
+<h1>DUE TO CLOUD COVER NO IMAGES FOR 6-10, 5-25, 5-09 in 2023</h1>
+</section>
+<section id="open-layer-selection-to-view" class="level1">
+<h1>OPEN LAYER SELECTION TO VIEW</h1>
+<p>Cloud cover leads to missing datasets and sections.</p>
+<div class="cell" data-execution_count="40">
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Set the map to focus on the study area</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>chloro_map.centerObject(aoi, zoom<span class="op">=</span><span class="dv">11</span>)</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>chloro_map.add_colorbar_branca(vis_params<span class="op">=</span> chloro_params, colors <span class="op">=</span> turbo_palette,vmin <span class="op">=</span>  <span class="dv">0</span>, vmax <span class="op">=</span> <span class="dv">3</span>, label <span class="op">=</span> <span class="st">'mg m^-3'</span>)</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>chloro_map</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="40">
+
+<iframe srcdoc="<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta http-equiv=&quot;content-type&quot; content=&quot;text/html; charset=UTF-8&quot; />
+    
+        <script>
+            L_NO_TOUCH = false;
+            L_DISABLE_3D = false;
+        </script>
+    
+    <style>html, body {width: 100%;height: 100%;margin: 0;padding: 0;}</style>
+    <style>#map {position:absolute;top:0;bottom:0;right:0;left:0;}</style>
+    <script src=&quot;https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js&quot;></script>
+    <script src=&quot;https://code.jquery.com/jquery-1.12.4.min.js&quot;></script>
+    <script src=&quot;https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js&quot;></script>
+    <script src=&quot;https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js&quot;></script>
+    <link rel=&quot;stylesheet&quot; href=&quot;https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css&quot;/>
+    <link rel=&quot;stylesheet&quot; href=&quot;https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css&quot;/>
+    <link rel=&quot;stylesheet&quot; href=&quot;https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css&quot;/>
+    <link rel=&quot;stylesheet&quot; href=&quot;https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css&quot;/>
+    <link rel=&quot;stylesheet&quot; href=&quot;https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css&quot;/>
+    <link rel=&quot;stylesheet&quot; href=&quot;https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css&quot;/>
+    
+            <meta name=&quot;viewport&quot; content=&quot;width=device-width,
+                initial-scale=1.0, maximum-scale=1.0, user-scalable=no&quot; />
+            <style>
+                #map_1cfb152b08f64ea6459d45a4ccfc762e {
+                    position: relative;
+                    width: 100.0%;
+                    height: 100.0%;
+                    left: 0.0%;
+                    top: 0.0%;
+                }
+                .leaflet-container { font-size: 1rem; }
+            </style>
+        
+    <script src=&quot;https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.4.2/Control.FullScreen.min.js&quot;></script>
+    <link rel=&quot;stylesheet&quot; href=&quot;https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.4.2/Control.FullScreen.min.css&quot;/>
+    <script src=&quot;https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.2/leaflet.draw.js&quot;></script>
+    <link rel=&quot;stylesheet&quot; href=&quot;https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.2/leaflet.draw.css&quot;/>
+    <script src=&quot;https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js&quot;></script>
+    <link rel=&quot;stylesheet&quot; href=&quot;https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css&quot;/>
+    <script src=&quot;https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js&quot;></script>
+</head>
+<body>
+    
+    
+            <div class=&quot;folium-map&quot; id=&quot;map_1cfb152b08f64ea6459d45a4ccfc762e&quot; ></div>
+        
+</body>
+<script>
+    
+    
+            var map_1cfb152b08f64ea6459d45a4ccfc762e = L.map(
+                &quot;map_1cfb152b08f64ea6459d45a4ccfc762e&quot;,
+                {
+                    center: [20.0, 0.0],
+                    crs: L.CRS.EPSG3857,
+                    zoom: 2,
+                    zoomControl: true,
+                    preferCanvas: false,
+                    eeInitialize: true,
+                    addGoogleMap: true,
+                    pluginLatlngpopup: false,
+                    pluginFullscreen: true,
+                    pluginDraw: true,
+                    DrawExport: false,
+                    pluginMinimap: false,
+                    locateControl: false,
+                    searchControl: true,
+                    layersControl: true,
+                }
+            );
+
+            
+
+        
+    
+            var tile_layer_5781834f48738d917317a976082f2916 = L.tileLayer(
+                &quot;https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png&quot;,
+                {&quot;attribution&quot;: &quot;Data by \u0026copy; \u003ca target=\&quot;_blank\&quot; href=\&quot;http://openstreetmap.org\&quot;\u003eOpenStreetMap\u003c/a\u003e, under \u003ca target=\&quot;_blank\&quot; href=\&quot;http://www.openstreetmap.org/copyright\&quot;\u003eODbL\u003c/a\u003e.&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 30, &quot;maxZoom&quot;: 30, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_4264e45b29062320c5c443f0286df7db = L.tileLayer(
+                &quot;https://mt1.google.com/vt/lyrs=m\u0026x={x}\u0026y={y}\u0026z={z}&quot;,
+                {&quot;attribution&quot;: &quot;Google&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 22, &quot;maxZoom&quot;: 22, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            L.control.fullscreen(
+                {&quot;forceSeparateButton&quot;: false, &quot;position&quot;: &quot;topleft&quot;, &quot;title&quot;: &quot;Full Screen&quot;, &quot;titleCancel&quot;: &quot;Exit Full Screen&quot;}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var options = {
+              position: &quot;topleft&quot;,
+              draw: {},
+              edit: {},
+            }
+            // FeatureGroup is to store editable layers.
+            var drawnItems = new L.featureGroup().addTo(
+                map_1cfb152b08f64ea6459d45a4ccfc762e
+            );
+            options.edit.featureGroup = drawnItems;
+            var draw_control_44bb216291e0b140d86b4ac4b81244c0 = new L.Control.Draw(
+                options
+            ).addTo( map_1cfb152b08f64ea6459d45a4ccfc762e );
+            map_1cfb152b08f64ea6459d45a4ccfc762e.on(L.Draw.Event.CREATED, function(e) {
+                var layer = e.layer,
+                    type = e.layerType;
+                var coords = JSON.stringify(layer.toGeoJSON());
+                layer.on('click', function() {
+                    alert(coords);
+                    console.log(coords);
+                });
+                drawnItems.addLayer(layer);
+             });
+            map_1cfb152b08f64ea6459d45a4ccfc762e.on('draw:created', function(e) {
+                drawnItems.addLayer(e.layer);
+            });
+            
+        
+    
+            L.Control.geocoder(
+                {&quot;collapsed&quot;: true, &quot;defaultMarkGeocode&quot;: true, &quot;position&quot;: &quot;topleft&quot;}
+            ).on('markgeocode', function(e) {
+                map_1cfb152b08f64ea6459d45a4ccfc762e.setView(e.geocode.center, 11);
+            }).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+
+        
+    
+            map_1cfb152b08f64ea6459d45a4ccfc762e.fitBounds(
+                [[20, 0], [20, 0]],
+                {&quot;maxZoom&quot;: 2}
+            );
+        
+    
+            var tile_layer_6c50c0b70e0882bea5b1155ab0642253 = L.tileLayer(
+                &quot;https://mt1.google.com/vt/lyrs=p\u0026x={x}\u0026y={y}\u0026z={z}&quot;,
+                {&quot;attribution&quot;: &quot;Google&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 22, &quot;maxZoom&quot;: 22, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_5a151e5852afd00ed72e9fd7a3f6e2ed = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/dafa9601c4a3fa1ea1fefea9519114ef-d91e926dc69fbbaeed45672d1c4fc987/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_8eb225684bbcd1bd5ad0d76d24e7238f = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/1338b68ed3dd7cd346bab383c3b921d7-b50aceb7fe6ffd622f65a764e7625a8d/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_0874e1b8bb313212d0decd538ca2ac1c = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/0b2af03507d61ced4a3e749f8666ec3a-23578a1ad81e9c301429b71d9f2db732/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_bad3c1c2240a5bb199ac1ce0c945c64d = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/f065a377c458736fcd84b2f7d2e349df-4e566cfd893078dd073561a1d0962d21/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_fc4874236bba4ba6fe96295aefed61a7 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/ce5104897091f0764afea500ed7812cd-e26614a4723916c23d12347303aeb22f/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_b24faafcaee8d6a4c886ae270206d88c = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/59a34ce459d4448492d479cb1b221a13-5be2997cee9d512611ab37c5aa41c753/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_a71bcefbad2a21adb17a6e5becea4557 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/a773da35817909efe1e0f4ad0a3a22fc-faca6f560d311ed14a7a4044c2a3ee6e/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_cf7be694ca29744ac58a9d9f30a23b99 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/fb0eac28f4f0e38f1c14855f3ec5763a-4d1994edec232cadb438990eb178a27b/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_30351abfe9f88e180b5178281eb14e03 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/f45eea00df0f2cb2440d18b2a0df9c26-5272c1dae51c2184de2f62c12c7657d5/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_dd0d375fde3cfcc0d093fb0613361e9e = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/16fdfabea11fe6485867b8536fb3d58e-83e5f7b39f08099a5e0c99f0e1044816/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_e667875cc75bae18d3d94dd3ee2e044b = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/d1efb9a33e9d4adfcf440756f8ac7639-5eb666375566ad53e6681d0960ac63bc/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_6bbe53a0323dd5980d23d9aa2679d837 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/240c6e84e43c94a763ada09d6e83b940-896f2aab654367babd3214ae938e9fe6/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_2aafc92a78cc2942d052ff003ae00ef0 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/3c0018215bf937178e9e99f711ed2ca4-332c2316b0525cf19a57d3a035dad667/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_08bda5b43987905f5ce7184eb371f2de = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/3d0fc908628a9c7f00894bd934efbb4e-0d786f0fbe67da01052e6cdbdeed4c70/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_5cf49bc500c4574c41ef9f8613a09b76 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/7a7288e5e4c657221589ef8f27c7fde7-0830a9286db03bdf15e68a582b64d889/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_a8c3463c9a234254cc9bab3a30b82fe2 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/97fcb1402ed46210ef395d208ea46689-aafbc294d1bbbf81bccb48a53e357af4/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_25aa65cff709ae8565b7de94c937eb16 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/ca64d5aec961f9263b5698afc6dfe7f2-9c94d1918ec7ef02ba814a41b694fff8/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_9f0a58f9317673728cc27fe40f8e6a94 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/4e9fe988de8994fa7222ccbe7244b481-261cc145c6c4ee721bbe94b576797848/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_83ab1354f876e4858f2d4b1d9878c438 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/5890f84c6a8b7c726592af0e717cfbe3-83f29d7d1b25a49cd46ce5d7a823b6de/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_004c8933e6dd7fd36a586ed8b9464a17 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/41f1cba1f51f9f647a47927f639a5ff5-a54c87cdfed3bc82a93d5ca8fba06a49/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_345785b237463a380d8131fa4f99a357 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/123288a9a1079e280aea0c2c88780e37-8c370093f56f285b1f257de7e7a15516/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_832411bfc2ca08073aebc2267016ea4c = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/717a9479aea18dd7ca8a6ac9bf4e3878-78950b7b4d2f8395730e7c08f29a2e92/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_74a66eadd3a0e1838e1614e00d2a2b32 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/98bd41d33d58e41f446fceae8efd7f6d-b8f9c60bb68991909666987d04347c07/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_880f52a60113b249f3ba78edc25315e1 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/7537984a3b9638680743e4bed285794f-7cfa241211530921a637ccf196a4500a/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_c47e38605282fddd1418884bdfc54dd5 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/3b8b9831055f1c72d27606ee579b20c4-ac72c982aaea96cabe9980bd64bf0251/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_d911a104e4ab092aee6f7e068a4f5d44 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/48bb530f849b9982a5f43a36992bc17e-8f0be0640bd75d3f64f4de3781b5f3dd/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_9a501e224df9f8e5d46dfaaef3fe12dd = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/61c5155c2e1e095e5530255be9e80d94-727282f5da3676863db8a3b715969c61/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_a5c57be44dfc7b05a6c5d2989b703f08 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/f536b3716b209a82a59212547702501e-5bf8fd69bf0d25e332813f3a2b5119ac/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_bd9555f965f4e0aca03eafe86ff9d2fe = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/002e56db96a45cc0346dfa99e0ecd459-697d24041d6426640ba45a3e8e071725/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_d009bf90084a319171a9f183b9ea7857 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/1a98455a2a34aad3c87326454666cb82-74c97c20593c7aece15b85f672184d7a/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_83eb3fcdb3fdad49075c599e8eaaff82 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/b5f5d15d28a51a1a2a29f5a8bafc512c-9520a2242382d036dcf8cc3bc016465d/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_10529d69329a00251446c71ad5026c51 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/0f155a17e1054e9f53f8ea58733b6e22-2f4cfdb572a6885269f413aa75dd5aea/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_9e8dcc1faab6e48d07856375fb294801 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/56ef459f3799ce8b9f385962d6813ef7-2480f0b7323a86abb284ffac7704872b/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_00e94ce531542d3e839756a82fe7e56f = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/67e1755b088fa3b033988cdbb50988cf-58f98b66d1a43960c35cbdd4056a448a/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_d4595f06ded479f272cf8fc4f8f7b465 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/a662b86da2081009f92e5cc603f91663-7cfd710e41564ff6e92473e01904a946/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_98fae1602f26503a2fabe65b02a33c75 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/e4ec836dde43ccde1a2b21848332bd61-7bb24ac26c7ace86c20bed843835075c/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_806a77fb2844cb93967bb11791ff3653 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/d06c916f83c05c6c496a0431ec8718b8-9cd9247c1d46d28e61968b28a9d1afd3/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_e08514a9b1471edc1284e8947cfab1ef = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/55aca950407c7b1f6694aa43b8e14406-d19f7f0ac9a42631f5312f1234489aa2/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_7f6adece36184e89204b8760481c06b0 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/cff6eee59588793b6620922bb5f602f0-5fc5a16bbe003b29586e1059f2cc316c/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_3ab3efc7ee4748a8e4b85170e0d44a91 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/0f6ae3e3400e671c12f86da02328a6f0-16e1c93e561e6db4b70ae2668b6e3104/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_9268c039ec000ce43f134b9411d010da = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/ff3c8c0802b3c6aea81569eac9c66f54-29ddc8623b1c23cfe8230d186423f9fa/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_10eaa6b5b63d629dc13e6e1c30d5381d = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/915b62f384e1144f486784e7dcd53c7c-189b8e33b17284b3c23d8afa84e89a3e/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_5a3fe360015cc9809d5e2be6b4e829f6 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/6577b9fb965db188ef6fb7bc07afbad4-0ed937fe7ffd063d1b6777b714379636/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_8f4adf6f194be22b14d69cbb631b8b4f = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/071f429be0541f36ed8a5fec6669aebc-48f3bb87e56cd2ef0aa1614c42d0d27b/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_a582b4cf483ce2690da4ff2d32c4a289 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/22fc66b0cf9508ffd06dc33a8bf1bb11-6f3217a0ab6152e19290fbfa78cdc662/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_1110d36f31f0f42faa171cb71b631177 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/b4403d295e306842d54eb47aac9cebb2-820d1cb493731427e68125e1b4e1b287/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_bf15eafcb280d0c0bb8663f6e047042f = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/93baa865e05bd987e898d13de1322fb0-f1e3e183010ec14366d8ff599b61fddb/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_23d54b6ac8db71e10c6417d5bc6712e3 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/55d15ec8cc15adf541fabdba8e001707-19e38ae53d2d38c705b367b8af4f230c/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_17c579e87ad243136eb5e727fd937ba8 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/98b5525976fa6460c7494d13e7a0a576-e853199da47c18896724c9a06921bcd2/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_10250afabf65eb6531b19f0e0457ca95 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/7db12bf29773c0d3862cc116ba54fdc4-5162aeaf10a8d3880390a1dc158e956d/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_c6ccf12ab65412313284196f954e79cb = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/3ecb5c1325f35bdd342afa13a44bd30c-729604f686f301fbdae4f1217f7c5a9f/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_b7627c08944d60be0500ae050dc210de = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/2a45cddd3e10db824c15eb6ce05c85bd-d39d5cf5202c3729c95f5e6de1376324/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_7294b5dc9268d3f5f637d0452d7e0b0c = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/dafa9601c4a3fa1ea1fefea9519114ef-3587adc03890facc934e3679983b4a05/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_f47c656643e012e94b685f1d3f274946 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/1338b68ed3dd7cd346bab383c3b921d7-2880ecb5c674eff4e971b2f83133ba23/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_0255f52b0ccfae67de7c0a97e055b9c1 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/0b2af03507d61ced4a3e749f8666ec3a-6d0ddfdb200424552e6510c1e4ab8ce0/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_82466759d01ed32b0abfcada5ab85714 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/f065a377c458736fcd84b2f7d2e349df-db5b9ecb028e0bcd0643890845b6e9ee/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_3ec9a90fa559c0879749f789d67e92c8 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/ce5104897091f0764afea500ed7812cd-b346435bdc98f1cd3124b9957fb7aebf/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_80db0920bd5e77f11cc2678641ec26fb = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/59a34ce459d4448492d479cb1b221a13-c1a18c7bb081f427c5013008aad8cf04/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_0bc3966804c18a287f61fce83b0ffdfd = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/a773da35817909efe1e0f4ad0a3a22fc-a7ac3243c6d100209bb0c63aca1974ba/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_8563d66074eaebe023f826133ea45637 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/fb0eac28f4f0e38f1c14855f3ec5763a-d0393b804c39fb348c47c55a9a82e146/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_830a7f22404ecc09d444656d53543445 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/f45eea00df0f2cb2440d18b2a0df9c26-69e742863dec9714a6b3262d4732d93e/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_9c2dee5a3c48e47da19b472282327589 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/16fdfabea11fe6485867b8536fb3d58e-af11e9b119f778ab06fd7e24ec87b1e0/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_c023cfdba3548256d64c0dfb71e53419 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/d1efb9a33e9d4adfcf440756f8ac7639-ba9322df8cf1bd63fee289d13344ff63/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_dfae8d9c9607c03a84c92cf5d571a7fe = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/240c6e84e43c94a763ada09d6e83b940-b4ee89c3a8182ba081d63f6bb86e71e7/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_814a60a109c9c1c233d688649f9a7a21 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/3c0018215bf937178e9e99f711ed2ca4-941b3a3f6ce74bc2958be2f4fcabb8d6/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_73d770c0840d7bb20e961dbbe3b18e3e = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/3d0fc908628a9c7f00894bd934efbb4e-63831acd15cc6acbf934e7a121628660/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_41b683d7be7a5ab23aa9c6b515845e2b = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/7a7288e5e4c657221589ef8f27c7fde7-c44e5e5dd9cd71097f8d163efb711c82/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_8e8d7022f7ea5c5a2b59bf4fd9d64d28 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/97fcb1402ed46210ef395d208ea46689-d9af87f25d1e57887c7b855213effead/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_f2ff78ad31429f58c6e1dca737cd4b3f = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/ca64d5aec961f9263b5698afc6dfe7f2-401d6f51a648cc4a2ea60b9ba38fad5e/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_549ef25f5e5d8190d41d0dd7befc9d6f = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/4e9fe988de8994fa7222ccbe7244b481-a3ccb39ae83abe83061c0d1fefa6f618/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_10e35bd9a02ec02bc06f98bad91ca743 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/5890f84c6a8b7c726592af0e717cfbe3-8be9e8756aa72828227a12f64f23455a/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_1fb073ac09b59f2c9ac07c60ff464e84 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/41f1cba1f51f9f647a47927f639a5ff5-f5c3911e5a3f186f72bb0b0d57975099/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_ff38f862f0f48c5a4fcf3d92d809ab92 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/123288a9a1079e280aea0c2c88780e37-7410241b01cdb47c0b26beeaa0f13b06/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_663f574c056f6f4806bcdbbde57181d3 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/717a9479aea18dd7ca8a6ac9bf4e3878-95acd4729b44ed94b47c177b006580d3/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_2f11fc49b566e76f622f6f0bcb033f72 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/98bd41d33d58e41f446fceae8efd7f6d-b72898b0b883883acc064270f9e0b5cc/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_42c2df2316f68ee007ca613539b19247 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/7537984a3b9638680743e4bed285794f-aca05973672f2883c8795abea1047362/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_a8f7d4559ece4810c35cdf9e9022994c = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/3b8b9831055f1c72d27606ee579b20c4-8a17e7cb109d867f81cf3d701c989c18/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_3036bd3c54d087175a6522c33b5a1533 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/48bb530f849b9982a5f43a36992bc17e-6a920eae0748eaa8665bef8655589d7c/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_991b5eb4598ef451823b872a265d2e44 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/61c5155c2e1e095e5530255be9e80d94-d35263ae9caa91c7bc3207f52e28dfb6/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_5317d81aaee36ceec59d085b48a37610 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/f536b3716b209a82a59212547702501e-df51c66c61c41c3b8f3d8eec8330bb19/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_d0fb40fffad28867055db12da4edabcc = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/002e56db96a45cc0346dfa99e0ecd459-fc429a030fc1f5121f098e389a7123da/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_0a5e4f75d6f9a6416ae67890e130a175 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/1a98455a2a34aad3c87326454666cb82-70f8b7466aa774bd4da03791fa58fa80/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_79c345cf0b203d8136f2748371834894 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/b5f5d15d28a51a1a2a29f5a8bafc512c-51f0e8f3d873b34aadd9dc9ee92f8853/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_2a4ad1330012b8c9fa64740863fbb668 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/0f155a17e1054e9f53f8ea58733b6e22-d466d4d7d36a3f2e99d7e4a77ca4249d/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_f7eec3e0145811e482fb593d8cf6662e = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/56ef459f3799ce8b9f385962d6813ef7-33a2b5d48f838266cbeeae7ee5b1053e/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_d7516807385e82b25f0652c3c3710752 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/67e1755b088fa3b033988cdbb50988cf-6629ca199bac7db2d7a36776502586e5/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_02ca076868939fb8b5bb00a259f6a01d = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/a662b86da2081009f92e5cc603f91663-d185df947ebda52818ed55ecf1230ee3/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_024fa37908a697e28c4c9b8412ca833f = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/e4ec836dde43ccde1a2b21848332bd61-5a8286da0034b8e453befd895afc16c4/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_cb5bc85ea87021c150ad611ec6004f1d = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/d06c916f83c05c6c496a0431ec8718b8-bb96770cd30d931fa614ae0812254914/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_67faac83c62c042b54904699484da524 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/55aca950407c7b1f6694aa43b8e14406-174e7cccc8aa2dd5520be993647b5d99/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_efe87bc860ca43defceb343966ec0b4d = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/cff6eee59588793b6620922bb5f602f0-09bbe07931cf647c488ae9aea5cce540/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_7c827f395112be2c98b2439dd5ef29ff = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/0f6ae3e3400e671c12f86da02328a6f0-583d357275f556132dbf694772a1aa43/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_a6f511505e30007586e2d4e5f6d0162c = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/ff3c8c0802b3c6aea81569eac9c66f54-f43d54740b8504898534276d66199d5b/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_dc8acd3238443e1328a17ee0668ee538 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/915b62f384e1144f486784e7dcd53c7c-441aa09ac3047dc43b0095aee5ef4ba6/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_985f10f5f89044d7dc60af092a35f5a4 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/6577b9fb965db188ef6fb7bc07afbad4-3e5c18574d8bdd3ce08790148f7a16c6/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_d3da5d429f7920a7cedc250fd1928bb4 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/071f429be0541f36ed8a5fec6669aebc-b82fffd9f5e5e31f38c347835d0c037b/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_e260ed3fe414d66dfc17674fccd1c224 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/22fc66b0cf9508ffd06dc33a8bf1bb11-adc4ff7b895def19bf81c847e68b76cc/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_16728e3765023d61549c53a1870a3789 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/b4403d295e306842d54eb47aac9cebb2-268738d247bc16fb3fc546c8e0041ce2/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_2f877d9731df50176ad79289e4fe2563 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/93baa865e05bd987e898d13de1322fb0-dcad7789cf61e605025cf88dab5fb349/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_38640464d7ca64329f07711ea01dad5a = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/55d15ec8cc15adf541fabdba8e001707-ee96eb08bd633b62b246190ff248b36c/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_fa0b930a3045b29829953d5e233bfd28 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/98b5525976fa6460c7494d13e7a0a576-83df3cfabd4b6e14d9d6c884ec84570e/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_0378d478b93f58d05932a15079690412 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/7db12bf29773c0d3862cc116ba54fdc4-bdc13ebb9bdb3d0ec68ad05562f96003/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_3888092eab8d4aa31155da68d1fda287 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/3ecb5c1325f35bdd342afa13a44bd30c-03e9bd39cf799f34ed05b21372048ec3/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            var tile_layer_94db2e915363707383a34f102117c0d9 = L.tileLayer(
+                &quot;https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/2a45cddd3e10db824c15eb6ce05c85bd-5bda1bbfdaa4921be5b4907cf2fb480c/tiles/{z}/{x}/{y}&quot;,
+                {&quot;attribution&quot;: &quot;Google Earth Engine&quot;, &quot;detectRetina&quot;: false, &quot;maxNativeZoom&quot;: 24, &quot;maxZoom&quot;: 24, &quot;minZoom&quot;: 0, &quot;noWrap&quot;: false, &quot;opacity&quot;: 1.0, &quot;subdomains&quot;: &quot;abc&quot;, &quot;tms&quot;: false}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+        
+    
+            map_1cfb152b08f64ea6459d45a4ccfc762e.fitBounds(
+                [[33.903703415795135, -118.48251142574082], [33.903703415795135, -118.48251142574082]],
+                {&quot;maxZoom&quot;: 11}
+            );
+        
+    
+    var color_map_ef2d9239967dcd7308458e0231cac69a = {};
+
+    
+    color_map_ef2d9239967dcd7308458e0231cac69a.color = d3.scale.threshold()
+              .domain([0.0, 0.006012024048096192, 0.012024048096192385, 0.018036072144288578, 0.02404809619238477, 0.03006012024048096, 0.036072144288577156, 0.04208416833667335, 0.04809619238476954, 0.05410821643286573, 0.06012024048096192, 0.06613226452905811, 0.07214428857715431, 0.0781563126252505, 0.0841683366733467, 0.09018036072144289, 0.09619238476953908, 0.10220440881763528, 0.10821643286573146, 0.11422845691382766, 0.12024048096192384, 0.12625250501002003, 0.13226452905811623, 0.13827655310621242, 0.14428857715430862, 0.15030060120240482, 0.156312625250501, 0.1623246492985972, 0.1683366733466934, 0.1743486973947896, 0.18036072144288579, 0.18637274549098196, 0.19238476953907815, 0.19839679358717435, 0.20440881763527055, 0.21042084168336672, 0.21643286573146292, 0.22244488977955912, 0.22845691382765532, 0.23446893787575152, 0.24048096192384769, 0.24649298597194388, 0.25250501002004005, 0.25851703406813625, 0.26452905811623245, 0.27054108216432865, 0.27655310621242485, 0.28256513026052105, 0.28857715430861725, 0.29458917835671344, 0.30060120240480964, 0.3066132264529058, 0.312625250501002, 0.3186372745490982, 0.3246492985971944, 0.3306613226452906, 0.3366733466933868, 0.342685370741483, 0.3486973947895792, 0.35470941883767537, 0.36072144288577157, 0.3667334669338677, 0.3727454909819639, 0.3787575150300601, 0.3847695390781563, 0.3907815631262525, 0.3967935871743487, 0.4028056112224449, 0.4088176352705411, 0.4148296593186373, 0.42084168336673344, 0.42685370741482964, 0.43286573146292584, 0.43887775551102204, 0.44488977955911824, 0.45090180360721444, 0.45691382765531063, 0.46292585170340683, 0.46893787575150303, 0.4749498997995992, 0.48096192384769537, 0.48697394789579157, 0.49298597194388777, 0.49899799599198397, 0.5050100200400801, 0.5110220440881763, 0.5170340681362725, 0.5230460921843687, 0.5290581162324649, 0.5350701402805611, 0.5410821643286573, 0.5470941883767535, 0.5531062124248497, 0.5591182364729459, 0.5651302605210421, 0.5711422845691383, 0.5771543086172345, 0.5831663326653307, 0.5891783567134269, 0.5951903807615231, 0.6012024048096193, 0.6072144288577155, 0.6132264529058116, 0.6192384769539078, 0.625250501002004, 0.6312625250501002, 0.6372745490981964, 0.6432865731462926, 0.6492985971943888, 0.655310621242485, 0.6613226452905812, 0.6673346693386774, 0.6733466933867736, 0.6793587174348698, 0.685370741482966, 0.6913827655310621, 0.6973947895791583, 0.7034068136272545, 0.7094188376753507, 0.7154308617234469, 0.7214428857715431, 0.7274549098196392, 0.7334669338677354, 0.7394789579158316, 0.7454909819639278, 0.751503006012024, 0.7575150300601202, 0.7635270541082164, 0.7695390781563126, 0.7755511022044088, 0.781563126252505, 0.7875751503006012, 0.7935871743486974, 0.7995991983967936, 0.8056112224448898, 0.811623246492986, 0.8176352705410822, 0.8236472945891784, 0.8296593186372746, 0.8356713426853707, 0.8416833667334669, 0.8476953907815631, 0.8537074148296593, 0.8597194388777555, 0.8657314629258517, 0.8717434869739479, 0.8777555110220441, 0.8837675350701403, 0.8897795591182365, 0.8957915831663327, 0.9018036072144289, 0.9078156312625251, 0.9138276553106213, 0.9198396793587175, 0.9258517034068137, 0.9318637274549099, 0.9378757515030061, 0.9438877755511023, 0.9498997995991983, 0.9559118236472945, 0.9619238476953907, 0.9679358717434869, 0.9739478957915831, 0.9799599198396793, 0.9859719438877755, 0.9919839679358717, 0.9979959919839679, 1.0040080160320641, 1.0100200400801602, 1.0160320641282565, 1.0220440881763526, 1.028056112224449, 1.034068136272545, 1.0400801603206413, 1.0460921843687374, 1.0521042084168337, 1.0581162324649298, 1.0641282565130261, 1.0701402805611222, 1.0761523046092185, 1.0821643286573146, 1.088176352705411, 1.094188376753507, 1.1002004008016033, 1.1062124248496994, 1.1122244488977955, 1.1182364729458918, 1.1242484969939879, 1.1302605210420842, 1.1362725450901803, 1.1422845691382766, 1.1482965931863727, 1.154308617234469, 1.160320641282565, 1.1663326653306614, 1.1723446893787575, 1.1783567134268538, 1.1843687374749499, 1.1903807615230462, 1.1963927855711423, 1.2024048096192386, 1.2084168336673347, 1.214428857715431, 1.220440881763527, 1.2264529058116231, 1.2324649298597194, 1.2384769539078155, 1.2444889779559118, 1.250501002004008, 1.2565130260521042, 1.2625250501002003, 1.2685370741482966, 1.2745490981963927, 1.280561122244489, 1.2865731462925851, 1.2925851703406814, 1.2985971943887775, 1.3046092184368738, 1.31062124248497, 1.3166332665330662, 1.3226452905811623, 1.3286573146292586, 1.3346693386773547, 1.3406813627254508, 1.346693386773547, 1.3527054108216432, 1.3587174348697395, 1.3647294589178356, 1.370741482965932, 1.376753507014028, 1.3827655310621243, 1.3887775551102204, 1.3947895791583167, 1.4008016032064128, 1.406813627254509, 1.4128256513026052, 1.4188376753507015, 1.4248496993987976, 1.4308617234468939, 1.43687374749499, 1.4428857715430863, 1.4488977955911824, 1.4549098196392785, 1.4609218436873748, 1.4669338677354709, 1.4729458917835672, 1.4789579158316633, 1.4849699398797596, 1.4909819639278556, 1.496993987975952, 1.503006012024048, 1.5090180360721444, 1.5150300601202404, 1.5210420841683367, 1.5270541082164328, 1.5330661322645291, 1.5390781563126252, 1.5450901803607215, 1.5511022044088176, 1.5571142284569137, 1.56312625250501, 1.5691382765531061, 1.5751503006012024, 1.5811623246492985, 1.5871743486973948, 1.593186372745491, 1.5991983967935872, 1.6052104208416833, 1.6112224448897796, 1.6172344689378757, 1.623246492985972, 1.629258517034068, 1.6352705410821644, 1.6412825651302605, 1.6472945891783568, 1.653306613226453, 1.6593186372745492, 1.6653306613226453, 1.6713426853707414, 1.6773547094188377, 1.6833667334669338, 1.68937875751503, 1.6953907815631262, 1.7014028056112225, 1.7074148296593186, 1.7134268537074149, 1.719438877755511, 1.7254509018036073, 1.7314629258517034, 1.7374749498997997, 1.7434869739478958, 1.749498997995992, 1.7555110220440882, 1.7615230460921845, 1.7675350701402806, 1.7735470941883769, 1.779559118236473, 1.785571142284569, 1.7915831663326653, 1.7975951903807614, 1.8036072144288577, 1.8096192384769538, 1.8156312625250501, 1.8216432865731462, 1.8276553106212425, 1.8336673346693386, 1.839679358717435, 1.845691382765531, 1.8517034068136273, 1.8577154308617234, 1.8637274549098197, 1.8697394789579158, 1.8757515030060121, 1.8817635270541082, 1.8877755511022045, 1.8937875751503006, 1.8997995991983967, 1.905811623246493, 1.911823647294589, 1.9178356713426854, 1.9238476953907815, 1.9298597194388778, 1.9358717434869739, 1.9418837675350702, 1.9478957915831663, 1.9539078156312626, 1.9599198396793587, 1.965931863727455, 1.971943887775551, 1.9779559118236474, 1.9839679358717435, 1.9899799599198398, 1.9959919839679359, 2.002004008016032, 2.0080160320641283, 2.0140280561122244, 2.0200400801603204, 2.026052104208417, 2.032064128256513, 2.038076152304609, 2.0440881763527052, 2.0501002004008018, 2.056112224448898, 2.062124248496994, 2.06813627254509, 2.0741482965931866, 2.0801603206412826, 2.0861723446893787, 2.092184368737475, 2.0981963927855714, 2.1042084168336674, 2.1102204408817635, 2.1162324649298596, 2.1222444889779557, 2.1282565130260522, 2.1342685370741483, 2.1402805611222444, 2.1462925851703405, 2.152304609218437, 2.158316633266533, 2.164328657314629, 2.1703406813627253, 2.176352705410822, 2.182364729458918, 2.188376753507014, 2.19438877755511, 2.2004008016032066, 2.2064128256513027, 2.212424849699399, 2.218436873747495, 2.224448897795591, 2.2304609218436875, 2.2364729458917836, 2.2424849699398797, 2.2484969939879758, 2.2545090180360723, 2.2605210420841684, 2.2665330661322645, 2.2725450901803605, 2.278557114228457, 2.284569138276553, 2.2905811623246493, 2.2965931863727453, 2.302605210420842, 2.308617234468938, 2.314629258517034, 2.32064128256513, 2.3266533066132267, 2.3326653306613228, 2.338677354709419, 2.344689378757515, 2.350701402805611, 2.3567134268537075, 2.3627254509018036, 2.3687374749498997, 2.374749498997996, 2.3807615230460923, 2.3867735470941884, 2.3927855711422845, 2.3987975951903806, 2.404809619238477, 2.4108216432865732, 2.4168336673346693, 2.4228456913827654, 2.428857715430862, 2.434869739478958, 2.440881763527054, 2.44689378757515, 2.4529058116232463, 2.458917835671343, 2.464929859719439, 2.470941883767535, 2.476953907815631, 2.4829659318637276, 2.4889779559118237, 2.49498997995992, 2.501002004008016, 2.5070140280561124, 2.5130260521042085, 2.5190380761523046, 2.5250501002004007, 2.531062124248497, 2.5370741482965933, 2.5430861723446894, 2.5490981963927855, 2.555110220440882, 2.561122244488978, 2.567134268537074, 2.5731462925851702, 2.5791583166332663, 2.585170340681363, 2.591182364729459, 2.597194388777555, 2.603206412825651, 2.6092184368737477, 2.6152304609218437, 2.62124248496994, 2.627254509018036, 2.6332665330661325, 2.6392785571142285, 2.6452905811623246, 2.6513026052104207, 2.6573146292585172, 2.6633266533066133, 2.6693386773547094, 2.6753507014028055, 2.6813627254509016, 2.687374749498998, 2.693386773547094, 2.6993987975951903, 2.7054108216432864, 2.711422845691383, 2.717434869739479, 2.723446893787575, 2.729458917835671, 2.7354709418837677, 2.741482965931864, 2.74749498997996, 2.753507014028056, 2.7595190380761525, 2.7655310621242486, 2.7715430861723447, 2.7775551102204408, 2.783567134268537, 2.7895791583166334, 2.7955911823647295, 2.8016032064128256, 2.8076152304609217, 2.813627254509018, 2.8196392785571143, 2.8256513026052104, 2.8316633266533064, 2.837675350701403, 2.843687374749499, 2.849699398797595, 2.8557114228456912, 2.8617234468937878, 2.867735470941884, 2.87374749498998, 2.879759519038076, 2.8857715430861726, 2.8917835671342687, 2.8977955911823647, 2.903807615230461, 2.909819639278557, 2.9158316633266534, 2.9218436873747495, 2.9278557114228456, 2.9338677354709417, 2.9398797595190382, 2.9458917835671343, 2.9519038076152304, 2.9579158316633265, 2.963927855711423, 2.969939879759519, 2.975951903807615, 2.9819639278557113, 2.987975951903808, 2.993987975951904, 3.0])
+              .range(['#30123bff', '#31133fff', '#321543ff', '#321647ff', '#33184aff', '#33194eff', '#341b51ff', '#341c55ff', '#351e58ff', '#351f5cff', '#362160ff', '#362363ff', '#372467ff', '#37266aff', '#38276eff', '#382971ff', '#392a74ff', '#392c77ff', '#3a2d7aff', '#3a2e7eff', '#3b2f81ff', '#3b3184ff', '#3c3287ff', '#3c348aff', '#3d368dff', '#3e3790ff', '#3e3993ff', '#3f3a96ff', '#3f3c99ff', '#3f3d9bff', '#3f3e9eff', '#403fa1ff', '#4041a4ff', '#4142a6ff', '#4144a9ff', '#4145acff', '#4147aeff', '#4249b1ff', '#424ab3ff', '#424bb5ff', '#424cb7ff', '#434ebaff', '#434fbdff', '#4451bfff', '#4452c1ff', '#4454c3ff', '#4455c5ff', '#4456c7ff', '#4457c9ff', '#4559cbff', '#455bceff', '#455cd0ff', '#455dd2ff', '#455ed4ff', '#4560d5ff', '#4661d7ff', '#4663d9ff', '#4664dbff', '#4665dcff', '#4666deff', '#4668dfff', '#4669e1ff', '#466ae2ff', '#466ce4ff', '#466de6ff', '#476fe7ff', '#4770e9ff', '#4771eaff', '#4772ebff', '#4774ecff', '#4775eeff', '#4777efff', '#4778f0ff', '#4779f1ff', '#477af2ff', '#467cf3ff', '#467df4ff', '#467ef5ff', '#4680f6ff', '#4681f7ff', '#4682f8ff', '#4683f9ff', '#4685faff', '#4686fbff', '#4687fbff', '#4588fcff', '#458afcff', '#458bfdff', '#458cfdff', '#448dfeff', '#448ffeff', '#4390feff', '#4391ffff', '#4293ffff', '#4294ffff', '#4195ffff', '#4196ffff', '#4098ffff', '#4099ffff', '#3f9affff', '#3e9bfeff', '#3d9dfeff', '#3c9efeff', '#3b9ffeff', '#3ba1fdff', '#3aa2fdff', '#39a3fcff', '#38a5fcff', '#38a6fbff', '#37a7fbff', '#36a9faff', '#35aaf9ff', '#34acf8ff', '#33adf8ff', '#32aef7ff', '#31aff6ff', '#30b0f5ff', '#2fb2f5ff', '#2eb3f4ff', '#2eb4f3ff', '#2db5f2ff', '#2cb7f1ff', '#2bb8f0ff', '#2ab9efff', '#29baedff', '#28bcecff', '#27bdebff', '#27beeaff', '#26bfe9ff', '#25c0e8ff', '#24c2e6ff', '#23c3e5ff', '#22c4e3ff', '#22c5e2ff', '#21c6e1ff', '#20c7dfff', '#1fc8deff', '#1fc9ddff', '#1ecadcff', '#1ecbdaff', '#1dccd9ff', '#1ccdd8ff', '#1bcfd7ff', '#1bd0d5ff', '#1ad1d4ff', '#1ad3d2ff', '#1ad4d1ff', '#19d4d0ff', '#19d5ceff', '#18d6cdff', '#18d7cbff', '#18d8caff', '#18d9c9ff', '#18dac8ff', '#18dbc6ff', '#18dcc5ff', '#18ddc3ff', '#18dec2ff', '#18dec1ff', '#18dfbfff', '#18e0beff', '#18e1bdff', '#18e2bcff', '#19e3bbff', '#19e3baff', '#19e4b8ff', '#19e4b7ff', '#1ae5b6ff', '#1be6b5ff', '#1ce7b3ff', '#1ce7b2ff', '#1de8b1ff', '#1ee9b0ff', '#1feaaeff', '#20eaacff', '#20ebabff', '#22ebaaff', '#23eca9ff', '#25eca7ff', '#26eda6ff', '#27eea4ff', '#28efa3ff', '#2aefa1ff', '#2bf0a0ff', '#2cf09eff', '#2df19cff', '#2ff19bff', '#30f299ff', '#32f398ff', '#33f396ff', '#35f494ff', '#37f492ff', '#38f591ff', '#3af58fff', '#3cf68eff', '#3ef68bff', '#3ff78aff', '#41f788ff', '#43f886ff', '#45f885ff', '#47f883ff', '#49f881ff', '#4bf97fff', '#4df97eff', '#4ffa7cff', '#51fa7bff', '#53fa79ff', '#54fa77ff', '#56fb75ff', '#58fb74ff', '#5afc72ff', '#5cfc70ff', '#5efc6eff', '#60fc6cff', '#62fd6bff', '#64fd69ff', '#66fd68ff', '#68fd66ff', '#6bfe64ff', '#6dfe62ff', '#6ffe61ff', '#71fe5fff', '#73fe5eff', '#75fe5cff', '#77fe5aff', '#79fe59ff', '#7bff57ff', '#7dff56ff', '#7fff54ff', '#80ff53ff', '#82ff52ff', '#84ff51ff', '#86ff4fff', '#88ff4eff', '#8aff4cff', '#8bff4bff', '#8dff4aff', '#8fff49ff', '#91ff48ff', '#93ff46ff', '#95ff45ff', '#97fe43ff', '#98fe42ff', '#9afe41ff', '#9bfe40ff', '#9dfe40ff', '#9efe3fff', '#a0fd3eff', '#a1fd3dff', '#a2fd3cff', '#a3fd3cff', '#a5fc3bff', '#a6fc3aff', '#a8fc39ff', '#a9fc39ff', '#aafb38ff', '#acfb38ff', '#adfb37ff', '#affb37ff', '#b0fa36ff', '#b1fa36ff', '#b2f936ff', '#b4f936ff', '#b5f835ff', '#b7f835ff', '#b8f735ff', '#b9f735ff', '#bbf634ff', '#bcf634ff', '#bdf534ff', '#bef434ff', '#c0f434ff', '#c1f334ff', '#c2f234ff', '#c3f134ff', '#c5f134ff', '#c6f034ff', '#c7f034ff', '#c8ef34ff', '#caee34ff', '#cbed34ff', '#cced34ff', '#ceec34ff', '#cfeb34ff', '#d1ea34ff', '#d2ea34ff', '#d3e935ff', '#d4e835ff', '#d5e735ff', '#d6e635ff', '#d8e535ff', '#d9e535ff', '#dae436ff', '#dbe336ff', '#dce236ff', '#dde136ff', '#dee037ff', '#dfe037ff', '#e0df37ff', '#e1de37ff', '#e2dd37ff', '#e3dc38ff', '#e4db38ff', '#e5da38ff', '#e6d938ff', '#e7d839ff', '#e8d739ff', '#e9d639ff', '#ead539ff', '#ebd439ff', '#ecd239ff', '#ecd13aff', '#edd03aff', '#eecf3aff', '#efce3aff', '#efcd3aff', '#f0cc3aff', '#f1cb3aff', '#f2ca3aff', '#f2c93aff', '#f4c83aff', '#f4c73aff', '#f5c63aff', '#f6c53aff', '#f6c43aff', '#f7c33aff', '#f7c23aff', '#f8c13aff', '#f8bf39ff', '#f9be39ff', '#f9bd39ff', '#fabc39ff', '#fabb39ff', '#fbba39ff', '#fbb938ff', '#fbb838ff', '#fbb737ff', '#fcb637ff', '#fcb436ff', '#fcb336ff', '#fcb236ff', '#fdb035ff', '#fdaf35ff', '#fdae34ff', '#fdad34ff', '#feab33ff', '#feaa33ff', '#fea932ff', '#fea732ff', '#fea631ff', '#fea531ff', '#fea330ff', '#fea130ff', '#fea02fff', '#fe9e2fff', '#fe9d2eff', '#fe9b2dff', '#fe9a2cff', '#fe992cff', '#fe982bff', '#fe962bff', '#fe952aff', '#fe932aff', '#fe9229ff', '#fe9029ff', '#fe8e28ff', '#fd8d27ff', '#fd8b26ff', '#fd8a26ff', '#fd8825ff', '#fc8724ff', '#fc8523ff', '#fc8423ff', '#fc8222ff', '#fb8122ff', '#fb7f21ff', '#fb7e20ff', '#fb7c1fff', '#fa7a1eff', '#fa791eff', '#f9771dff', '#f9761dff', '#f9741cff', '#f9731cff', '#f8711bff', '#f8701aff', '#f76e19ff', '#f76d19ff', '#f66b18ff', '#f66a18ff', '#f56817ff', '#f56617ff', '#f46516ff', '#f46315ff', '#f36214ff', '#f36014ff', '#f25f13ff', '#f25d13ff', '#f15c12ff', '#f15b12ff', '#f05a11ff', '#f05811ff', '#ef5710ff', '#ee5510ff', '#ed540fff', '#ec530fff', '#ec510eff', '#eb500eff', '#eb4f0dff', '#ea4e0dff', '#e94c0cff', '#e84b0cff', '#e84a0cff', '#e7490bff', '#e6480bff', '#e5470aff', '#e5460aff', '#e4450aff', '#e3440aff', '#e24309ff', '#e24109ff', '#e14008ff', '#e03f08ff', '#df3e08ff', '#de3d08ff', '#dd3c07ff', '#dd3b07ff', '#dc3a07ff', '#db3907ff', '#da3806ff', '#d93706ff', '#d83606ff', '#d73506ff', '#d63405ff', '#d53305ff', '#d43205ff', '#d33105ff', '#d23005ff', '#d12f05ff', '#d02e04ff', '#cf2d04ff', '#ce2c04ff', '#cd2b04ff', '#cc2a04ff', '#cb2a04ff', '#c92903ff', '#c82803ff', '#c72703ff', '#c52603ff', '#c42503ff', '#c32503ff', '#c22402ff', '#c12302ff', '#c02202ff', '#be2102ff', '#bd2002ff', '#bc2002ff', '#bb1f02ff', '#b91e02ff', '#b81d02ff', '#b71c01ff', '#b51b01ff', '#b41b01ff', '#b31a01ff', '#b21901ff', '#b01801ff', '#af1701ff', '#ad1701ff', '#ac1601ff', '#aa1601ff', '#a91501ff', '#a81401ff', '#a71301ff', '#a51301ff', '#a31201ff', '#a21201ff', '#a01101ff', '#9f1001ff', '#9d0f01ff', '#9c0f01ff', '#9a0e01ff', '#990e01ff', '#970d01ff', '#960d01ff', '#940c01ff', '#930b01ff', '#910a01ff', '#8f0a01ff', '#8d0901ff', '#8b0901ff', '#8a0802ff', '#880802ff', '#870702ff', '#850702ff', '#830602ff', '#810602ff', '#800502ff', '#7e0502ff', '#7c0402ff', '#7a0403ff']);
+    
+
+    color_map_ef2d9239967dcd7308458e0231cac69a.x = d3.scale.linear()
+              .domain([0.0, 3.0])
+              .range([0, 450 - 50]);
+
+    color_map_ef2d9239967dcd7308458e0231cac69a.legend = L.control({position: 'topright'});
+    color_map_ef2d9239967dcd7308458e0231cac69a.legend.onAdd = function (map) {var div = L.DomUtil.create('div', 'legend'); return div};
+    color_map_ef2d9239967dcd7308458e0231cac69a.legend.addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+
+    color_map_ef2d9239967dcd7308458e0231cac69a.xAxis = d3.svg.axis()
+        .scale(color_map_ef2d9239967dcd7308458e0231cac69a.x)
+        .orient(&quot;top&quot;)
+        .tickSize(1)
+        .tickValues([0.0, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 0.3058823529411765, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 0.611764705882353, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 0.9176470588235294, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 1.223529411764706, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 1.5294117647058822, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 1.8352941176470587, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 2.1411764705882352, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 2.447058823529412, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 2.7529411764705882, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']);
+
+    color_map_ef2d9239967dcd7308458e0231cac69a.svg = d3.select(&quot;.legend.leaflet-control&quot;).append(&quot;svg&quot;)
+        .attr(&quot;id&quot;, 'legend')
+        .attr(&quot;width&quot;, 450)
+        .attr(&quot;height&quot;, 40);
+
+    color_map_ef2d9239967dcd7308458e0231cac69a.g = color_map_ef2d9239967dcd7308458e0231cac69a.svg.append(&quot;g&quot;)
+        .attr(&quot;class&quot;, &quot;key&quot;)
+        .attr(&quot;transform&quot;, &quot;translate(25,16)&quot;);
+
+    color_map_ef2d9239967dcd7308458e0231cac69a.g.selectAll(&quot;rect&quot;)
+        .data(color_map_ef2d9239967dcd7308458e0231cac69a.color.range().map(function(d, i) {
+          return {
+            x0: i ? color_map_ef2d9239967dcd7308458e0231cac69a.x(color_map_ef2d9239967dcd7308458e0231cac69a.color.domain()[i - 1]) : color_map_ef2d9239967dcd7308458e0231cac69a.x.range()[0],
+            x1: i < color_map_ef2d9239967dcd7308458e0231cac69a.color.domain().length ? color_map_ef2d9239967dcd7308458e0231cac69a.x(color_map_ef2d9239967dcd7308458e0231cac69a.color.domain()[i]) : color_map_ef2d9239967dcd7308458e0231cac69a.x.range()[1],
+            z: d
+          };
+        }))
+      .enter().append(&quot;rect&quot;)
+        .attr(&quot;height&quot;, 40 - 30)
+        .attr(&quot;x&quot;, function(d) { return d.x0; })
+        .attr(&quot;width&quot;, function(d) { return d.x1 - d.x0; })
+        .style(&quot;fill&quot;, function(d) { return d.z; });
+
+    color_map_ef2d9239967dcd7308458e0231cac69a.g.call(color_map_ef2d9239967dcd7308458e0231cac69a.xAxis).append(&quot;text&quot;)
+        .attr(&quot;class&quot;, &quot;caption&quot;)
+        .attr(&quot;y&quot;, 21)
+        .text(&quot;mg m^-3&quot;);
+    
+            var layer_control_04fa8722fba14925615f5d1514c2b702 = {
+                base_layers : {
+                    &quot;openstreetmap&quot; : tile_layer_5781834f48738d917317a976082f2916,
+                },
+                overlays :  {
+                    &quot;Google Maps&quot; : tile_layer_4264e45b29062320c5c443f0286df7db,
+                    &quot;Google Terrain&quot; : tile_layer_6c50c0b70e0882bea5b1155ab0642253,
+                    &quot;Layer 2023-06-10&quot; : tile_layer_7294b5dc9268d3f5f637d0452d7e0b0c,
+                    &quot;Layer 2023-05-25&quot; : tile_layer_f47c656643e012e94b685f1d3f274946,
+                    &quot;Layer 2023-05-09&quot; : tile_layer_0255f52b0ccfae67de7c0a97e055b9c1,
+                    &quot;Layer 2023-04-07&quot; : tile_layer_82466759d01ed32b0abfcada5ab85714,
+                    &quot;Layer 2023-03-22&quot; : tile_layer_3ec9a90fa559c0879749f789d67e92c8,
+                    &quot;Layer 2023-03-06&quot; : tile_layer_80db0920bd5e77f11cc2678641ec26fb,
+                    &quot;Layer 2023-02-18&quot; : tile_layer_0bc3966804c18a287f61fce83b0ffdfd,
+                    &quot;Layer 2023-02-02&quot; : tile_layer_8563d66074eaebe023f826133ea45637,
+                    &quot;Layer 2023-01-17&quot; : tile_layer_830a7f22404ecc09d444656d53543445,
+                    &quot;Layer 2023-01-01&quot; : tile_layer_9c2dee5a3c48e47da19b472282327589,
+                    &quot;Layer 2022-12-16&quot; : tile_layer_c023cfdba3548256d64c0dfb71e53419,
+                    &quot;Layer 2022-11-30&quot; : tile_layer_dfae8d9c9607c03a84c92cf5d571a7fe,
+                    &quot;Layer 2022-11-14&quot; : tile_layer_814a60a109c9c1c233d688649f9a7a21,
+                    &quot;Layer 2022-10-29&quot; : tile_layer_73d770c0840d7bb20e961dbbe3b18e3e,
+                    &quot;Layer 2022-10-13&quot; : tile_layer_41b683d7be7a5ab23aa9c6b515845e2b,
+                    &quot;Layer 2022-09-27&quot; : tile_layer_8e8d7022f7ea5c5a2b59bf4fd9d64d28,
+                    &quot;Layer 2022-08-26&quot; : tile_layer_f2ff78ad31429f58c6e1dca737cd4b3f,
+                    &quot;Layer 2022-08-10&quot; : tile_layer_549ef25f5e5d8190d41d0dd7befc9d6f,
+                    &quot;Layer 2022-07-25&quot; : tile_layer_10e35bd9a02ec02bc06f98bad91ca743,
+                    &quot;Layer 2022-07-09&quot; : tile_layer_1fb073ac09b59f2c9ac07c60ff464e84,
+                    &quot;Layer 2022-06-23&quot; : tile_layer_ff38f862f0f48c5a4fcf3d92d809ab92,
+                    &quot;Layer 2022-06-07&quot; : tile_layer_663f574c056f6f4806bcdbbde57181d3,
+                    &quot;Layer 2022-05-22&quot; : tile_layer_2f11fc49b566e76f622f6f0bcb033f72,
+                    &quot;Layer 2022-05-06&quot; : tile_layer_42c2df2316f68ee007ca613539b19247,
+                    &quot;Layer 2022-04-20&quot; : tile_layer_a8f7d4559ece4810c35cdf9e9022994c,
+                    &quot;Layer 2022-04-04&quot; : tile_layer_3036bd3c54d087175a6522c33b5a1533,
+                    &quot;Layer 2022-03-19&quot; : tile_layer_991b5eb4598ef451823b872a265d2e44,
+                    &quot;Layer 2022-03-03&quot; : tile_layer_5317d81aaee36ceec59d085b48a37610,
+                    &quot;Layer 2022-02-15&quot; : tile_layer_d0fb40fffad28867055db12da4edabcc,
+                    &quot;Layer 2022-01-30&quot; : tile_layer_0a5e4f75d6f9a6416ae67890e130a175,
+                    &quot;Layer 2022-01-14&quot; : tile_layer_79c345cf0b203d8136f2748371834894,
+                    &quot;Layer 2021-12-29&quot; : tile_layer_2a4ad1330012b8c9fa64740863fbb668,
+                    &quot;Layer 2021-12-13&quot; : tile_layer_f7eec3e0145811e482fb593d8cf6662e,
+                    &quot;Layer 2021-11-27&quot; : tile_layer_d7516807385e82b25f0652c3c3710752,
+                    &quot;Layer 2021-11-11&quot; : tile_layer_02ca076868939fb8b5bb00a259f6a01d,
+                    &quot;Layer 2021-10-26&quot; : tile_layer_024fa37908a697e28c4c9b8412ca833f,
+                    &quot;Layer 2021-10-10&quot; : tile_layer_cb5bc85ea87021c150ad611ec6004f1d,
+                    &quot;Layer 2021-09-24&quot; : tile_layer_67faac83c62c042b54904699484da524,
+                    &quot;Layer 2021-09-08&quot; : tile_layer_efe87bc860ca43defceb343966ec0b4d,
+                    &quot;Layer 2021-08-23&quot; : tile_layer_7c827f395112be2c98b2439dd5ef29ff,
+                    &quot;Layer 2021-08-07&quot; : tile_layer_a6f511505e30007586e2d4e5f6d0162c,
+                    &quot;Layer 2021-07-22&quot; : tile_layer_dc8acd3238443e1328a17ee0668ee538,
+                    &quot;Layer 2021-07-06&quot; : tile_layer_985f10f5f89044d7dc60af092a35f5a4,
+                    &quot;Layer 2021-06-20&quot; : tile_layer_d3da5d429f7920a7cedc250fd1928bb4,
+                    &quot;Layer 2021-06-04&quot; : tile_layer_e260ed3fe414d66dfc17674fccd1c224,
+                    &quot;Layer 2021-05-19&quot; : tile_layer_16728e3765023d61549c53a1870a3789,
+                    &quot;Layer 2021-05-03&quot; : tile_layer_2f877d9731df50176ad79289e4fe2563,
+                    &quot;Layer 2021-04-17&quot; : tile_layer_38640464d7ca64329f07711ea01dad5a,
+                    &quot;Layer 2021-04-01&quot; : tile_layer_fa0b930a3045b29829953d5e233bfd28,
+                    &quot;Layer 2021-03-16&quot; : tile_layer_0378d478b93f58d05932a15079690412,
+                    &quot;Layer 2021-02-28&quot; : tile_layer_3888092eab8d4aa31155da68d1fda287,
+                    &quot;Layer 2021-02-12&quot; : tile_layer_94db2e915363707383a34f102117c0d9,
+                },
+            };
+            L.control.layers(
+                layer_control_04fa8722fba14925615f5d1514c2b702.base_layers,
+                layer_control_04fa8722fba14925615f5d1514c2b702.overlays,
+                {&quot;autoZIndex&quot;: true, &quot;collapsed&quot;: true, &quot;position&quot;: &quot;topright&quot;}
+            ).addTo(map_1cfb152b08f64ea6459d45a4ccfc762e);
+            tile_layer_7294b5dc9268d3f5f637d0452d7e0b0c.remove();
+            tile_layer_f47c656643e012e94b685f1d3f274946.remove();
+            tile_layer_0255f52b0ccfae67de7c0a97e055b9c1.remove();
+            tile_layer_82466759d01ed32b0abfcada5ab85714.remove();
+            tile_layer_3ec9a90fa559c0879749f789d67e92c8.remove();
+            tile_layer_80db0920bd5e77f11cc2678641ec26fb.remove();
+            tile_layer_0bc3966804c18a287f61fce83b0ffdfd.remove();
+            tile_layer_8563d66074eaebe023f826133ea45637.remove();
+            tile_layer_830a7f22404ecc09d444656d53543445.remove();
+            tile_layer_9c2dee5a3c48e47da19b472282327589.remove();
+            tile_layer_c023cfdba3548256d64c0dfb71e53419.remove();
+            tile_layer_dfae8d9c9607c03a84c92cf5d571a7fe.remove();
+            tile_layer_814a60a109c9c1c233d688649f9a7a21.remove();
+            tile_layer_73d770c0840d7bb20e961dbbe3b18e3e.remove();
+            tile_layer_41b683d7be7a5ab23aa9c6b515845e2b.remove();
+            tile_layer_8e8d7022f7ea5c5a2b59bf4fd9d64d28.remove();
+            tile_layer_f2ff78ad31429f58c6e1dca737cd4b3f.remove();
+            tile_layer_549ef25f5e5d8190d41d0dd7befc9d6f.remove();
+            tile_layer_10e35bd9a02ec02bc06f98bad91ca743.remove();
+            tile_layer_1fb073ac09b59f2c9ac07c60ff464e84.remove();
+            tile_layer_ff38f862f0f48c5a4fcf3d92d809ab92.remove();
+            tile_layer_663f574c056f6f4806bcdbbde57181d3.remove();
+            tile_layer_2f11fc49b566e76f622f6f0bcb033f72.remove();
+            tile_layer_42c2df2316f68ee007ca613539b19247.remove();
+            tile_layer_a8f7d4559ece4810c35cdf9e9022994c.remove();
+            tile_layer_3036bd3c54d087175a6522c33b5a1533.remove();
+            tile_layer_991b5eb4598ef451823b872a265d2e44.remove();
+            tile_layer_5317d81aaee36ceec59d085b48a37610.remove();
+            tile_layer_d0fb40fffad28867055db12da4edabcc.remove();
+            tile_layer_0a5e4f75d6f9a6416ae67890e130a175.remove();
+            tile_layer_79c345cf0b203d8136f2748371834894.remove();
+            tile_layer_2a4ad1330012b8c9fa64740863fbb668.remove();
+            tile_layer_f7eec3e0145811e482fb593d8cf6662e.remove();
+            tile_layer_d7516807385e82b25f0652c3c3710752.remove();
+            tile_layer_02ca076868939fb8b5bb00a259f6a01d.remove();
+            tile_layer_024fa37908a697e28c4c9b8412ca833f.remove();
+            tile_layer_cb5bc85ea87021c150ad611ec6004f1d.remove();
+            tile_layer_67faac83c62c042b54904699484da524.remove();
+            tile_layer_efe87bc860ca43defceb343966ec0b4d.remove();
+            tile_layer_7c827f395112be2c98b2439dd5ef29ff.remove();
+            tile_layer_a6f511505e30007586e2d4e5f6d0162c.remove();
+            tile_layer_dc8acd3238443e1328a17ee0668ee538.remove();
+            tile_layer_985f10f5f89044d7dc60af092a35f5a4.remove();
+            tile_layer_d3da5d429f7920a7cedc250fd1928bb4.remove();
+            tile_layer_e260ed3fe414d66dfc17674fccd1c224.remove();
+            tile_layer_16728e3765023d61549c53a1870a3789.remove();
+            tile_layer_2f877d9731df50176ad79289e4fe2563.remove();
+            tile_layer_38640464d7ca64329f07711ea01dad5a.remove();
+            tile_layer_fa0b930a3045b29829953d5e233bfd28.remove();
+            tile_layer_0378d478b93f58d05932a15079690412.remove();
+            tile_layer_3888092eab8d4aa31155da68d1fda287.remove();
+            tile_layer_94db2e915363707383a34f102117c0d9.remove();
+        
+</script>
+</html>" width="100%" height="600" style="border:none !important;" "allowfullscreen"="" "webkitallowfullscreen"="" "mozallowfullscreen"=""></iframe>
+</div>
+</div>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>

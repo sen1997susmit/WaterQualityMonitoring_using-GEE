@@ -1,12 +1,15 @@
-
-# Earth Engine App
-
-A collection of [Earth Engine web apps](https://romero61-waterqualitymonitoring-smb.hf.space) developed using Solara and geemap.
-[<img align="center" src="img/ee-smb.gif"  style="width: 280px; margin-right: 20px;" />](https://romero61-waterqualitymonitoring-smb.hf.space)
+import solara
 
 
+@solara.component
+def Page():
+    with solara.Column(align="center"):
+        markdown ="""
+## Earth Engine Web Apps
 
+**A collection of Earth Engine web apps developed using [Solara](https://github.com/widgetti/solara) and geemap**
 
+    
 # WaterQualityMonitoring_SMB
 Monitoring water quality in the Santa Monica Bay using Landsat 8 OLI satellite data
 
@@ -15,7 +18,7 @@ This notebook aims to reproduce and extend the analysis conducted in the ocean r
 
 We utilize Landsat 8 satellite imagery to estimate Chlorophyll-a concentrations & Suspended Particle Matter and analyze changes over time, particularly focusing on the impact of the Hyperion Treatment Plant failure.
 
-The notebooks include the following steps:
+The Earth Engine Web app include the following steps:
 
 1. Importing necessary Python libraries for data manipulation, mathematical operations, data visualization, handling date and time data, interacting with Google Earth Engine, and handling geospatial data.
 
@@ -66,3 +69,12 @@ In conclusion, while there are some similarities in terms of being coastal water
 Trinh, R. C., Fichot, C. G., Gierach, M. M., Holt, B., Malakar, N. K., Hulley, G., & Smith, J. (2017). Application of Landsat 8 for Monitoring Impacts of Wastewater Discharge on Coastal Water Quality. Frontiers in Marine Science, 4. https://doi.org/10.3389/fmars.2017.00329
 
 Novoa S, Doxaran D, Ody A, Vanhellemont Q, Lafon V, Lubac B, Gernez P. Atmospheric Corrections and Multi-Conditional Algorithm for Multi-Sensor Remote Sensing of Suspended Particulate Matter in Low-to-High Turbidity Levels Coastal Waters. Remote Sensing. 2017; 9(1):61. https://doi.org/10.3390/rs9010061
+
+Quinten Vanhellemont. Automated Water Surface Temperature Retrieval from Landsat 8/TIRS. Feb. 2020, pp. 111518–18, https://doi.org/10.1016/j.rse.2019.111518. Accessed 17 July 2023.
+
+Ansari, Mohsen, and M. Akhoondzadeh. Mapping Water Salinity Using Landsat-8 OLI Satellite Images (Case Study: Karun Basin Located in Iran). no. 5, Mar. 2020, pp. 1490–502, https://doi.org/10.1016/j.asr.2019.12.007. Accessed 17 July 2023.
+
+‌Landsat-8 imagery courtesy of the U.S. Geological Survey
+ """
+
+        solara.Markdown(markdown)
